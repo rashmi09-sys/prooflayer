@@ -1,0 +1,17 @@
+node_modules
+.next
+.data
+.env*.local
+next-env.d.ts
+*.tsbuildinfo
+.demo-snapshot
+.vercel
+.env
+.env.*
+!.env.example
+# Fixture build output (the fixtures' own ignore rules live in fixtures/*/base/gitignore)
+fixtures/*/base/node_modules
+fixtures/*/base/.next
+fixtures/*/base/out
+fixtures/*/base/next-env.d.ts
+.env*

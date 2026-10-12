@@ -1,0 +1,14 @@
+# Never upload local secrets or local data. The Vercel build recreates the
+# public snapshot from the committed recorded package (npm run build:public).
+.env
+.env.*
+!.env.example
+.data
+.demo-snapshot
+.next
+.vercel
+node_modules
+fixtures/*/*/node_modules
+fixtures/*/*/.next
+fixtures/*/*/out
+*.log

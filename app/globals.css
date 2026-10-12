@@ -1,0 +1,286 @@
+@import "tailwindcss";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/*
+  ProofLayer design tokens: Graphite, the single theme.
+
+  Deep graphite canvas, elevated charcoal surfaces, near-white ink. Electric
+  violet and vivid indigo carry identity and live AI activity; coral is rare
+  and reserved for the product being protected (DashDish) and key moments.
+  Green, amber and red appear only on outcomes, always with a glyph and a word.
+
+  Type: Geist for interface and display (tight tracking at large sizes),
+  Geist Mono for anything copied or compared (SHAs, paths, commands, values).
+
+  Motion: 180-350 ms ease-out; sequences only where they explain what is
+  happening. Everything respects prefers-reduced-motion.
+*/
+:root {
+  --bg: #101116;
+  --surface: #191b23;
+  --surface-2: #1f2129;
+  --surface-3: #232630;
+  --line: #262933;
+  --line-strong: #343846;
+  --ink: #f5f5f7;
+  --ink-2: #c9cbd6;
+  --ink-3: #a1a5b5;
+  --accent: #755cff;
+  --accent-2: #5145f5;
+  --accent-hover: #8a75ff;
+  --accent-soft: #231e45;
+  --accent-ink: #b8abff;
+  --on-accent: #ffffff;
+  --coral: #ff7048;
+  --coral-soft: #3a1f19;
+  --pass: #3fd08a;
+  --pass-soft: #12291f;
+  --fail: #ff6b5e;
+  --fail-soft: #33191b;
+  --warn: #f5b14c;
+  --warn-soft: #2f2412;
+  --muted: #9a9daa;
+  --muted-soft: #1f2129;
+  --log-bg: #0b0c10;
+  --log-ink: #d7d9e2;
+  --log-dim: #7b7f8e;
+  --shadow-sm: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 1px 2px rgb(0 0 0 / 0.45);
+  --shadow-md: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 18px 44px -18px rgb(0 0 0 / 0.8);
+  --glow-accent: 0 0 0 1px rgb(117 92 255 / 0.4), 0 0 32px -8px rgb(117 92 255 / 0.55);
+  --nav-bg: #0c0d11;
+  --nav-line: #1b1d24;
+  --nav-ink: #9a9daa;
+  --nav-ink-strong: #f5f5f7;
+  --nav-hover: #161820;
+  --nav-active: #1d1b33;
+  --nav-accent: #8a75ff;
+  color-scheme: dark;
+}
+
+/* Dark log/evidence stage: constant in every theme. */
+:root {
+  --stage-bg: #0d0e12;
+  --stage-surface: #16181d;
+  --stage-line: #272a32;
+  --stage-ink: #f2f3f6;
+  --stage-ink-2: #b0b4bf;
+  --stage-ink-3: #7c808b;
+  --stage-pass: #4cc98d;
+  --stage-fail: #ff7b6c;
+  --stage-warn: #f0b44c;
+  --stage-accent: #a5a3ff;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-pass: var(--pass);
+  --color-pass-soft: var(--pass-soft);
+  --color-fail: var(--fail);
+  --color-fail-soft: var(--fail-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-muted: var(--muted);
+  --color-muted-soft: var(--muted-soft);
+  --color-log-bg: var(--log-bg);
+  --color-log-ink: var(--log-ink);
+  --color-log-dim: var(--log-dim);
+  --color-nav-bg: var(--nav-bg);
+  --color-nav-line: var(--nav-line);
+  --color-nav-ink: var(--nav-ink);
+  --color-nav-ink-strong: var(--nav-ink-strong);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-nav-accent: var(--nav-accent);
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --color-accent-2: var(--accent-2);
+  --color-coral: var(--coral);
+  --color-coral-soft: var(--coral-soft);
+  --color-stage-bg: var(--stage-bg);
+  --color-stage-surface: var(--stage-surface);
+  --color-stage-line: var(--stage-line);
+  --color-stage-ink: var(--stage-ink);
+  --color-stage-ink-2: var(--stage-ink-2);
+  --color-stage-ink-3: var(--stage-ink-3);
+  --color-stage-pass: var(--stage-pass);
+  --color-stage-fail: var(--stage-fail);
+  --color-stage-warn: var(--stage-warn);
+  --color-stage-accent: var(--stage-accent);
+
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Type scale (px): 12 · 13 · 14 · 16 · 19 · 24 · 32 · 44 · 64 */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6rem;
+  --text-lg: 1.1875rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 2.4rem;
+  --text-3xl: 2.75rem;
+  --text-3xl--line-height: 3rem;
+  --text-4xl: 4rem;
+  --text-4xl--line-height: 4rem;
+
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body {
+  background: var(--bg);
+  min-height: 100dvh;
+}
+
+/* In the base layer so component utilities (e.g. focus-visible:outline-none
+   on the palette input, which has its own focus treatment) can override it. */
+@layer base {
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 650;
+    letter-spacing: -0.035em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Thin, quiet scrollbars inside panels. */
+.pl-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* ---------------------------------------------------------------- motion
+   Motion only reports real work: a running step, a newly recorded state,
+   or a direct response to the user. All of it is removed under
+   prefers-reduced-motion. */
+
+@keyframes pl-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  70% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.pl-live-dot { animation: pl-pulse 1.6s ease-out infinite; }
+
+@keyframes pl-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(260%); }
+}
+.pl-progress-bar { animation: pl-progress 1.3s ease-in-out infinite; }
+
+@keyframes pl-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.pl-enter { animation: pl-enter 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+/* A recorded state change: the marker settles in once. */
+@keyframes pl-settle {
+  0% { transform: scale(0.6); opacity: 0.2; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.pl-settle { animation: pl-settle 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Seal segments draw in when their check finishes. */
+@keyframes pl-draw {
+  from { stroke-dashoffset: var(--len); }
+  to { stroke-dashoffset: 0; }
+}
+.pl-draw { animation: pl-draw 600ms cubic-bezier(0.3, 0.7, 0.2, 1) both; }
+
+@keyframes pl-spin-slow { to { transform: rotate(360deg); } }
+.pl-spin-slow { animation: pl-spin-slow 2.4s linear infinite; transform-origin: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-live-dot, .pl-progress-bar, .pl-enter, .pl-settle, .pl-draw, .pl-spin-slow {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Highlight drawn around a value measured in the rendered page. */
+@keyframes pl-ring {
+  from { stroke-dashoffset: var(--perim); opacity: 0.2; }
+  to { stroke-dashoffset: 0; opacity: 1; }
+}
+.pl-ring { stroke-dasharray: var(--perim); animation: pl-ring 900ms var(--ring-delay, 250ms) cubic-bezier(0.3, 0.7, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .pl-ring { animation: none !important; }
+}
+
+/* The running step breathes; it only exists while the worker reports it running. */
+@keyframes pl-step-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+.pl-step-pulse { animation: pl-step-pulse 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pl-step-pulse { animation: none !important; opacity: 0; }
+}
+
+/* NeverBreak at work: the mark breathes only while something is really running. */
+@keyframes nb-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(117 92 255 / 0.55); }
+  50% { box-shadow: 0 0 0 8px rgb(117 92 255 / 0); }
+}
+.nb-breathe { animation: nb-breathe 1.8s ease-out infinite; }
+@keyframes nb-shimmer { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.nb-shimmer { animation: nb-shimmer 1.6s ease-in-out infinite; }
+@keyframes nb-pulse { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+.nb-pulse { transform-box: fill-box; transform-origin: center; animation: nb-pulse 1.4s ease-out infinite; }
+
+/* A connection carrying evidence from the app to NeverBreak, while a check runs. */
+@keyframes nb-flow { to { stroke-dashoffset: -24; } }
+.nb-flow { stroke-dasharray: 4 8; animation: nb-flow 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nb-breathe, .nb-flow, .nb-shimmer, .nb-pulse { animation: none !important; }
+}

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm audit --omit=dev
+      # The public demo exactly as Vercel builds it, then the HTTP security checks against it.
+      - run: npm run build:public
+      - name: Security smoke test (public demo)
+        run: |
+          npm run start:public > server.log 2>&1 &
+          for i in $(seq 30); do curl -sf -o /dev/null http://localhost:3000/p/dashdish && break; sleep 1; done
+          node scripts/security-smoke.mjs http://localhost:3000
