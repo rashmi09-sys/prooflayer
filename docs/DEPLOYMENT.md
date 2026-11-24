@@ -54,7 +54,7 @@ The build recreates the snapshot from committed files only.
 
 ## Or: deploy from GitHub
 
-1. Push the repository to GitHub (see [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)).
+1. Push the repository to GitHub.
 2. In Vercel: **Add New → Project → Import** the repository. Leave the framework as Next.js; `vercel.json` sets the install and build commands.
 3. Under **Environment Variables**, optionally add `PROOFLAYER_PUBLIC_DEMO` = `true` for Production and Preview.
 4. Under **Settings → General → Node.js Version**, choose 22.x or newer.

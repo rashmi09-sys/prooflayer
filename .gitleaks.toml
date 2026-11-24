@@ -1,0 +1,16 @@
+# gitleaks configuration. The default rules stay on.
+#
+# The redaction tests need strings shaped like credentials to prove that
+# ProofLayer scrubs them. Only these two exact synthetic values are allowed;
+# any other match is still reported. Unlike commit fingerprints, this keeps
+# working when history is rewritten.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Exact synthetic credentials used by the redaction tests"
+regexTarget = "match"
+regexes = [
+  '''ghp_abcdefghijklmnopqrstuvwxyz0123456789''',
+  '''AKIAABCDEFGHIJKLMNOP''',
+]

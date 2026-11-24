@@ -13,7 +13,7 @@ Full report: [SECURITY_AUDIT.md](SECURITY_AUDIT.md). Summary of what was execute
 | Simulated public runtime: unprivileged, read-only tree, no `.data`, no git | `scripts/security-smoke.mjs`: 42/42. OFF "Scheduled delivery was added, but regular checkout broke." (39 s); ON "Scheduled delivery works. Regular checkout still works." (48 s). 0 POSTs; axe: 0 violations on 9 screens; no overflow from 390 to 1440 px |
 | Private live runs after the hardening | OFF run_z4q0ahoIMqxc failed as expected (80 s; 10 journey frames). Repair of an OFF run refused (409). ON detected the regression and repaired and verified it (174 s) |
 | Operator auth over HTTP | `__Host-pl_session` cookie (httpOnly, Secure, Lax). A copied cookie was rejected after sign-out (401). A cross-site POST got 403. 12 wrong codes led to "limited" |
-| `npm audit --omit=dev`, gitleaks | 0 vulnerabilities; no leaks (5 reviewed fake test tokens listed in `.gitleaksignore`) |
+| `npm audit --omit=dev`, gitleaks | 0 vulnerabilities; no leaks (5 reviewed fake test tokens, then listed in `.gitleaksignore`; now allowed by exact value in `.gitleaks.toml`) |
 
 ## One prompt, two outcomes — 11 October 2026
 

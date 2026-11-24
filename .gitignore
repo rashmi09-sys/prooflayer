@@ -14,4 +14,3 @@ fixtures/*/base/node_modules
 fixtures/*/base/.next
 fixtures/*/base/out
 fixtures/*/base/next-env.d.ts
-.env*

@@ -1,0 +1,19 @@
+Copyright (c) 2026 Rashmi B. All rights reserved.
+
+This repository is published so that its source can be read and evaluated.
+It is not open source, and no licence is granted.
+
+You may view the source on GitHub and run it locally for the sole purpose of
+evaluating it. You may not copy, modify, merge, publish, distribute,
+sublicense, sell or otherwise reuse this software or any part of it, and you
+may not use it to provide a product or service, without prior written
+permission from the copyright holder.
+
+Third-party components keep their own licences. This includes the npm
+packages listed in package-lock.json and the fonts under
+fixtures/dashdish/base/app/fonts, which are licensed under the SIL Open Font
+License 1.1 (see the OFL-*.txt files beside them).
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM THE SOFTWARE OR ITS USE.

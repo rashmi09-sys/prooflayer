@@ -214,7 +214,9 @@ Fix: the sandbox CSP is sent on every preview response.
   - Prepared fixes are labelled "written in advance, not generated".
   - Recorded playback is labelled "Recorded demonstration", and the public demo reports `workerOnline: false`.
 
-## Tests performed (all ran; results as observed)
+## Tests performed at the original audit (October 2026)
+
+These are the results recorded when the audit was done, against the development history of that time. They are kept as a record and were not all repeated later. The current state is in [Current verification](#current-verification-24-november-2026) below.
 
 | Test | Result |
 |---|---|
@@ -223,13 +225,28 @@ Fix: the sandbox CSP is sent on every preview response.
 | `tests/security.test.ts` | Covers: <br>• fail-closed mode resolution <br>• token forgery, expiry, oversized tokens and epoch revocation <br>• the CSRF matrix <br>• the limiter: per client, global, bounded, and counting before checking <br>• the lockfile policy, including traversal, git, file, http, foreign hosts, bundled packages and workspaces <br>• the pinned npm config overriding a malicious `.npmrc` (real `npm config get`) |
 | `tsc --noEmit`, `eslint .` | Clean |
 | `npm run build` (private) and `VERCEL=1 npm run build:public` in a clean directory | Both succeed |
-| `npm audit --omit=dev` and `npm audit` | **0 vulnerabilities** (next 16.4.0, the current release) |
-| gitleaks 8.21.2 on all 16 commits | **No leaks.** 5 findings in test files are fake tokens used to prove redaction; they are reviewed and listed in `.gitleaksignore`. The working tree's real `.env.local` is untracked and ignored by git and Vercel. |
+| `npm audit --omit=dev` and `npm audit` | **0 vulnerabilities** at the time, on next 16.4.0. Advisories were published against 16.4.0 afterwards; see the current verification |
+| gitleaks 8.21.2 on the 16 commits of the development history | **No leaks.** 5 findings in test files are fake tokens used to prove redaction; they were reviewed and listed in `.gitleaksignore`. That history was squashed before publication, so those commits and fingerprints no longer exist. The working tree's real `.env.local` is untracked and ignored by git and Vercel. |
 | Simulated Vercel runtime: unprivileged user, read-only tree, no `.data`, no `fixtures`, no `git` on PATH, `VERCEL=1` | All public pages 200; operator paths 404 |
 | `scripts/security-smoke.mjs` against that runtime | **42 / 42.** Covers: <br>• writes refused (405) <br>• operator surfaces absent <br>• traversal, private files and other projects refused <br>• logs and configuration withheld <br>• CSP, framing and nosniff headers <br>• clean error bodies |
 | Browser QA on that runtime (Chromium) | **Flows:** NeverBreak OFF ends on "Scheduled delivery was added, but regular checkout broke." (39 s). ON ends on "Scheduled delivery works. Regular checkout still works." (48 s). The browser sent 0 POSTs and logged no page errors. <br>**Embedded builds, driven:** the original has no Schedule option and regular checkout confirms. The changed build: regular checkout stops at "Choose a delivery time", scheduled reaches "Order scheduled". The repaired build: both succeed. <br>**Layout and keyboard:** no overflow at 390, 768, 1024, 1280 or 1440 px; the toggle works with arrow keys. <br>**Accessibility:** axe (WCAG 2.0/2.1 AA) found 0 violations on 9 screens, with reduced motion. |
 | Private mode after the fixes (Docker worker, live) | **OFF:** run_z4q0ahoIMqxc failed as expected in 80 s; its Chromium journeys still captured 10 frames under confinement. The repair API returned 409 for an OFF run. <br>**ON:** detected the regression, then repaired and verified it in 174 s. |
 | Operator authentication over HTTP | **Cookie:** `__Host-pl_session`, httpOnly, Secure, Lax. <br>**Revocation:** a copied cookie worked before sign-out (200) and was rejected after it (401). <br>**CSRF:** a cross-site POST carrying the cookie got 403. <br>**Limits:** 12 wrong codes returned "limited". |
+
+## Current verification (24 November 2026)
+
+Repeated before making the repository public, on the published history.
+
+| Check | Result |
+|---|---|
+| `npm audit` and `npm audit --omit=dev` | **0 vulnerabilities** after upgrading next 16.4.0 to 16.4.6, eslint to 10.15.0 and typescript-eslint to 8.74.0. Before the upgrade, `npm audit --omit=dev` reported ten advisories against next 16.4.0, including critical ones |
+| `npm test` | **141 / 141 pass** |
+| `tsc --noEmit`, `eslint .` | Clean |
+| `npm run build` and `npm run build:public` | Both succeed |
+| `scripts/security-smoke.mjs` against the local public build | **42 / 42** |
+| gitleaks 8.21.2 on every commit of the published history | **No leaks.** The two synthetic values used by the redaction tests are allowed by exact value in `.gitleaks.toml`; the default rules stay on and nothing is allowed by path or by commit |
+
+Not repeated for this check: the Docker worker, the Chromium journeys, the operator authentication tests over HTTP and the simulated Vercel runtime. The smoke test was run against a local public build, not against the hosted demo.
 
 ## Residual risks
 
@@ -242,11 +259,11 @@ Fix: the sandbox CSP is sent on every preview response.
 7. **The origin check trusts `X-Forwarded-Host`.** Deploy behind a proxy that sets it (Vercel does), or with none.
 8. **Preview links are capabilities in the URL.** They carry an HMAC token and could leak through history or sharing. They expose only the public fixture's static builds.
 9. **The public build trusts the committed recorded package.** It is SHA-256 verified on import, but its authenticity rests on the git history.
-10. **Repository hygiene is not automated yet.** Enable GitHub Dependabot, secret scanning and push protection when publishing (see the [release checklist](RELEASE_CHECKLIST.md)).
+10. **Repository hygiene is only partly automated.** Dependabot is configured. Enable GitHub secret scanning and push protection when publishing.
 
 ## Unverified assumptions
 
-- **No real Vercel deploy was done.** The audit had no Vercel access. A deployment was simulated as listed above. It assumes:
+- **No real Vercel deploy was done during the audit.** The audit had no Vercel access. A deployment was simulated as listed above. The demo has since been deployed to Vercel, but these assumptions and the smoke test were not re-checked against the hosted URL. The simulation assumed:
   - Vercel's build image provides `git` and `bash`, which `demo:init` uses to recreate the fixture repositories.
   - Vercel uses Node ≥ 22.18, which the `engines` field requires.
   - Vercel honours `outputFileTracingIncludes` for `.demo-snapshot/`.
