@@ -230,7 +230,7 @@ These are the results recorded when the audit was done, against the development 
 | `tests/security.test.ts` | Covers: <br>• fail-closed mode resolution <br>• token forgery, expiry, oversized tokens and epoch revocation <br>• the CSRF matrix <br>• the limiter: per client, global, bounded, and counting before checking <br>• the lockfile policy, including traversal, git, file, http, foreign hosts, bundled packages and workspaces <br>• the pinned npm config overriding a malicious `.npmrc` (real `npm config get`) |
 | `tsc --noEmit`, `eslint .` | Clean |
 | `npm run build` (private) and `VERCEL=1 npm run build:public` in a clean directory | Both succeed |
-| `npm audit --omit=dev` and `npm audit` | **0 vulnerabilities** at the time, on next 16.4.0. Advisories were published against 16.4.0 afterwards; see the current verification |
+| `npm audit --omit=dev` and `npm audit` on the root application | **0 vulnerabilities** at the time, on next 16.4.0. Advisories were published against 16.4.0 afterwards; see the current verification |
 | gitleaks 8.21.2 on the 16 commits of the development history | **No leaks.** 5 findings in test files are fake tokens used to prove redaction; they were reviewed and listed in `.gitleaksignore`. That history was squashed before publication, so those commits and fingerprints no longer exist. The working tree's real `.env.local` is untracked and ignored by git and Vercel. |
 | Simulated Vercel runtime: unprivileged user, read-only tree, no `.data`, no `fixtures`, no `git` on PATH, `VERCEL=1` | All public pages 200; operator paths 404 |
 | `scripts/security-smoke.mjs` against that runtime | **42 / 42.** Covers: <br>• writes refused (405) <br>• operator surfaces absent <br>• traversal, private files and other projects refused <br>• logs and configuration withheld <br>• CSP, framing and nosniff headers <br>• clean error bodies |
@@ -244,7 +244,7 @@ Repeated before making the repository public, on the published history.
 
 | Check | Result |
 |---|---|
-| `npm audit` and `npm audit --omit=dev` | **0 vulnerabilities** after upgrading next 16.4.0 to 16.4.6, eslint to 10.15.0 and typescript-eslint to 8.74.0. Before the upgrade, `npm audit --omit=dev` reported ten advisories against next 16.4.0, including critical ones |
+| `npm audit` and `npm audit --omit=dev` on the root application | **0 vulnerabilities** after upgrading next 16.4.0 to 16.4.6, eslint to 10.15.0 and typescript-eslint to 8.74.0. Before the upgrade, `npm audit --omit=dev` reported ten advisories against next 16.4.0, including critical ones |
 | `npm test` | **141 / 141 pass** |
 | `tsc --noEmit`, `eslint .` | Clean |
 | `npm run build` and `npm run build:public` | Both succeed |
@@ -252,7 +252,70 @@ Repeated before making the repository public, on the published history.
 | `scripts/security-smoke.mjs` against the production Vercel deployment, executed personally by the author | **42 / 42** |
 | gitleaks 8.21.2 on every commit of the published history | **No leaks.** The two synthetic values used by the redaction tests are allowed by exact value in `.gitleaks.toml`; the default rules stay on and nothing is allowed by path or by commit |
 
+The audit result covers the root application only. The fixture apps have their own lockfiles with known advisories; see [Fixture dependency advisories](#fixture-dependency-advisories-25-november-2026).
+
 Not repeated for this check: the Docker worker, the Chromium journeys, the operator authentication tests over HTTP and the simulated Vercel runtime.
+
+## Fixture dependency advisories (25 November 2026)
+
+The zero-vulnerability results in this document apply to the root ProofLayer application (`package-lock.json`). The two fixture demo apps have their own lockfiles, and those carry known advisories.
+
+**How this was established.** On push, GitHub reported 22 Dependabot alerts on the default branch: 4 critical, 2 high, 16 moderate. The alerts themselves could not be read from the environment this review ran in. The figures below were reproduced separately with `npm audit --package-lock-only` in each fixture directory, and the totals match GitHub's count. The mapping of individual Dependabot alerts to these advisories is therefore inferred, not confirmed from GitHub.
+
+| Lockfile | Package | Locked version | Advisories |
+|---|---|---|---|
+| `fixtures/dashdish/base/package-lock.json` | `next` | 16.4.0 | 10 (listed below) |
+| `fixtures/dashdish/base/package-lock.json` | `minimatch` (dev, through `typescript-eslint` 8.71.1) | 10.2.6 | GHSA-g3hv-75wg-m249, moderate |
+| `fixtures/ledgerly/base/package-lock.json` | `next` | 16.4.0 | The same 10 |
+| `fixtures/ledgerly/base/package-lock.json` | `minimatch` (dev, through `typescript-eslint` 8.71.1) | 10.2.6 | GHSA-g3hv-75wg-m249, moderate |
+
+Advisories against `next` 16.4.0, per fixture:
+
+| Advisory | Severity | Subject |
+|---|---|---|
+| GHSA-2464-fhr4-w9xw | Critical | Remote code execution in the image optimization API |
+| GHSA-673q-mjm6-r5xr | Critical | Remote code execution in `use cache` |
+| GHSA-p3m5-59mp-jv5r | High | Denial of service through Server Actions |
+| GHSA-mfr8-8qww-v76h | Moderate | Information disclosure across root params with `use cache` |
+| GHSA-vc7v-qv4w-wrv8 | Moderate | Cache leak across root param values |
+| GHSA-7qx7-33qx-rqx2 | Moderate | SVG rejection bypass in image optimization |
+| GHSA-f3mh-rxg3-f5g2 | Moderate | HttpOnly cookie exposure through an internal response header |
+| GHSA-pc58-hwjq-p385 | Moderate | Cross-client response injection when self-hosted |
+| GHSA-rhh4-g77r-r9qj | Moderate | Cross-user cache disclosure and poisoning |
+| GHSA-vvgp-ww4w-46vf | Moderate | Cache poisoning of shared fallback shells |
+
+Per fixture: 2 critical, 1 high, 8 moderate. Fixed versions exist: `next` 16.4.6 and `typescript-eslint` 8.74.0.
+
+**Why the fixtures are pinned.** The fixture repositories are built from `fixtures/` with deterministic commits. The recorded demonstration (`demo/recorded/dashdish`, with its SHA-256 manifest) and the October validation record cite those commit SHAs. Changing a fixture lockfile changes the SHAs, so the recorded evidence would no longer correspond to a reproducible commit. The pins are kept until the evidence is re-recorded.
+
+**Public demo.** The deployment does not install fixture dependencies and does not run a fixture Next.js server:
+- `fixtures/` and `demo/` are excluded from the server bundle, and the public build recreates the fixture repositories with git only.
+- Ledgerly is not in the public snapshot.
+- The DashDish previews are static exports recorded in October: HTML, CSS and client-side JavaScript compiled by Next.js 16.4.0, served as files by the root application on Next.js 16.4.6.
+
+The ten `next` advisories concern server-side features. This review found no server-side fixture code path in the public deployment through which they could be reached. That is an assessment of this deployment's design, not a guarantee, and client-side code compiled by the older version is still delivered to visitors inside a sandboxed frame.
+
+**Private verification.** Risk remains here and is accepted for a single-operator installation:
+- **Ledgerly.** The page-capture step starts `next start` on Next.js 16.4.0 inside a container. The container is non-root, read-only, has its capabilities dropped and sits on an internal Docker network, where the worker's confined Chromium connects to it. Anything else that can reach that network, or the worker host itself, could reach the vulnerable server. Residual risk 2 applies.
+- **DashDish.** Next.js 16.4.0 runs as a build tool in a network-less container, and the build is served by ProofLayer's own static server. The `minimatch` advisory applies to linting the fixture's own files.
+- The sandbox treats checked code as untrusted in any case, so its controls do not depend on the fixture's dependencies being sound. No container-escape testing was done (see Unverified assumptions).
+
+**Running a fixture directly.** Running `next dev` or `next start` in a fixture directory outside ProofLayer starts a Next.js 16.4.0 server with the advisories above, including two rated critical. **Do not expose a fixture server to the internet or to an untrusted network.** Use the fixtures only through ProofLayer or on a local machine.
+
+**Future maintenance.** Upgrading both fixtures, re-running the DashDish runs on a private worker, exporting a new recorded package with a new manifest, and updating the commit SHAs cited in the documentation. Until then the alerts remain open and are documented here.
+
+### Earlier deployments of the root application
+
+Before 24 November 2026 the root application itself was on Next.js 16.4.0. The Vercel project lists four production deployments, all in the ready state:
+
+| Created | Root Next.js version | Status |
+|---|---|---|
+| 24 Nov 2026 | 16.4.6 | Current production |
+| 23 Oct 2026 | Built before the upgrade | Superseded, not deleted |
+| 12 Oct 2026 | Built before the upgrade | Superseded, not deleted |
+| 11 Oct 2026 | Built before the upgrade | Superseded, not deleted |
+
+The production domain serves the 24 November deployment. The three earlier deployments still exist at their own deployment URLs. The project has Vercel Authentication enabled for all URLs except the production domains, which should require a Vercel sign-in for those URLs; this was read from the project settings and not confirmed by requesting the URLs anonymously. Deleting the three earlier deployments would remove the question. They must not be promoted (see [DEPLOYMENT.md](DEPLOYMENT.md#rollback)).
 
 ## Residual risks
 
@@ -266,6 +329,8 @@ Not repeated for this check: the Docker worker, the Chromium journeys, the opera
 8. **Preview links are capabilities in the URL.** They carry an HMAC token and could leak through history or sharing. They expose only the public fixture's static builds.
 9. **The public build trusts the committed recorded package.** It is SHA-256 verified on import, but its authenticity rests on the git history.
 10. **Repository hygiene is only partly automated.** Dependabot is configured. GitHub secret scanning and push protection are repository settings and were not verified by this audit.
+11. **Fixture dependencies carry known advisories.** Both fixture apps are pinned to Next.js 16.4.0. A vulnerable fixture server runs inside the private sandbox for Ledgerly, and anyone running a fixture directly runs one too. See [Fixture dependency advisories](#fixture-dependency-advisories-25-november-2026).
+12. **Earlier deployments, built before the root upgrade to Next.js 16.4.6, still exist** in the Vercel project, behind Vercel Authentication as configured. See the same section.
 
 ## Unverified assumptions
 

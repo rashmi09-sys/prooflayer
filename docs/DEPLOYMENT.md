@@ -102,6 +102,7 @@ npm run worker                # second terminal
 ```
 
 Sign in at `/operator`. The worker refuses to start in public-demo mode. For hardening:
+- Don't run a fixture app's own server (`next dev` or `next start` in `fixtures/`) on a public or untrusted network. The fixtures are pinned to Next.js 16.4.0, which has known advisories; see [SECURITY_AUDIT.md](SECURITY_AUDIT.md#fixture-dependency-advisories-25-november-2026).
 - Run the worker as an unprivileged user, so Chromium keeps its own sandbox.
 - Don't expose the operator installation to the internet.
 
@@ -109,6 +110,6 @@ Sign in at `/operator`. The worker refuses to start in public-demo mode. For har
 
 Prefer rolling forward: fix on `main` and redeploy.
 
-If a rollback is needed, Vercel keeps earlier deployments (**Deployments → Promote to Production**, or `vercel rollback`). Only promote a deployment built from commit `1638106` or later, which is where Next.js was upgraded to 16.4.6. Deployments built before that commit use Next.js 16.4.0, which has published security advisories, and should not be restored.
+If a rollback is needed, Vercel keeps earlier deployments (**Deployments → Promote to Production**, or `vercel rollback`). Only promote a deployment built on or after 24 November 2026, when the root application was upgraded to Next.js 16.4.6 (commit `1638106` in this repository). Deployments built before that use Next.js 16.4.0, which has published security advisories, and should not be restored. Three such deployments, from 11, 12 and 23 October 2026, still exist in the Vercel project; consider deleting them.
 
 The public deployment serves an immutable snapshot built into it and writes nothing at runtime, so a rollback has no data to migrate.

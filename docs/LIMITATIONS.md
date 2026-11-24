@@ -20,6 +20,14 @@ What ProofLayer verifies today, how, and where its guarantees stop.
 - **Storage** is SQLite on the worker host.
 - **The interactive preview** needs the production server (`npm run build && npm start`); the Next.js dev server blocks its assets.
 
+## Fixture dependencies
+
+- **Pinned on purpose.** DashDish and Ledgerly are locked to Next.js 16.4.0 so that their deterministic commits, the recorded demonstration and its SHA-256 manifest stay reproducible. That version has known advisories: `npm audit` reports 11 per fixture, 22 in total, including two rated critical. The root ProofLayer application is audited separately and is on Next.js 16.4.6.
+- **Public demo.** It serves recorded static exports of DashDish. It does not install fixture dependencies or run a fixture Next.js server.
+- **Private verification.** Fixture code, including a Next.js 16.4.0 server for Ledgerly's page capture, runs inside the sandbox. The sandbox limits what that server can reach; it does not remove the vulnerabilities.
+- **Do not expose a fixture server publicly.** Running `next dev` or `next start` in a fixture directory starts a vulnerable server. Keep it on a local machine.
+- Details and advisory IDs: [SECURITY_AUDIT.md](SECURITY_AUDIT.md#fixture-dependency-advisories-25-november-2026).
+
 ## Evidence guarantees
 
 - **Passed** means the five required checks (install, lint, type check, tests, build) exited 0 on that exact commit. It is not proof that the application is free of defects, secure or ready for production.
@@ -51,4 +59,5 @@ Not built:
 - Hosted live verification (the worker needs a host with Docker).
 - Multiple users and an identity provider.
 - Postgres storage. A Supabase migration with Row Level Security is written in `db/supabase/` but has never been applied or tested.
+- Upgrading the fixture dependencies and re-recording the DashDish evidence with a new manifest and new commit SHAs.
 - A stronger sandbox runtime (gVisor class) and concurrent workers.

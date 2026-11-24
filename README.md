@@ -149,12 +149,13 @@ Threat model, findings, fixes and residual risks: [docs/SECURITY_AUDIT.md](docs/
 | `npm test` | 141 of 141 pass | 24 Nov 2026 |
 | `tsc --noEmit`, `eslint .` | Clean | 24 Nov 2026 |
 | `npm run build`, `npm run build:public` | Both succeed | 24 Nov 2026 |
-| `npm audit` and `npm audit --omit=dev` | 0 vulnerabilities (Next.js 16.4.6) | 24 Nov 2026 |
+| `npm audit` and `npm audit --omit=dev` on the root ProofLayer application | 0 vulnerabilities (Next.js 16.4.6) | 24 Nov 2026 |
+| `npm audit` on the two fixture apps in `fixtures/` | 22 known advisories (11 per fixture), pinned on purpose; [details](docs/SECURITY_AUDIT.md#fixture-dependency-advisories-25-november-2026) | 25 Nov 2026 |
 | gitleaks over the git history | No leaks | 24 Nov 2026 |
 | `scripts/security-smoke.mjs` against the production Vercel deployment | 42 of 42, run by me | 24 Nov 2026 |
 | Docker worker and Chromium journeys | Last run during the October audit; not repeated since | Oct 2026 |
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the tests, type check, lint, audit, the public build and the smoke test against it. What was executed, with run IDs, and what was not: [docs/VALIDATION.md](docs/VALIDATION.md).
+GitHub Actions (`.github/workflows/ci.yml`) runs the tests, type check, lint, the root dependency audit, the public build and the smoke test against it. What was executed, with run IDs, and what was not: [docs/VALIDATION.md](docs/VALIDATION.md).
 
 ## Run it locally
 
@@ -185,6 +186,7 @@ Every variable is server-only and documented in [.env.example](.env.example); th
 - **What "Passed" means:** the required checks exited 0 on that exact commit. A protected flow passes when its test passed and, where it has one, its journey reached the expected screen. Neither is proof that the application has no defects.
 - **Execution model:** live verification runs on one private machine, one run at a time, for a single operator. It is not hosted and has no multi-tenant isolation.
 - **Controlled repair:** restores or rolls back code known to have passed, or applies the one prepared fix. It does not write fixes.
+- **Fixture dependencies:** the demo apps are pinned to Next.js 16.4.0, which has known advisories, to keep the recorded evidence reproducible. The public demo serves their recorded static exports and does not run a fixture server. Do not expose a fixture server publicly.
 - **AI explanations:** implemented, with only their failure paths tested; a successful model response has not been validated.
 - **Evaluation:** no external user testing has been carried out.
 

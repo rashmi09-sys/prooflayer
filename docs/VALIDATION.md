@@ -9,11 +9,23 @@ Run on the published history before the repository was made public.
 | Automated tests (`npm test`) | 141 of 141 pass |
 | Type checking (`tsc --noEmit`) and lint (`eslint .`) | Clean |
 | `npm run build` and `npm run build:public` | Both succeed |
-| `npm audit` and `npm audit --omit=dev` | 0 vulnerabilities at the time, after upgrading Next.js from 16.4.0 to 16.4.6 |
+| `npm audit` and `npm audit --omit=dev` on the root ProofLayer application | 0 vulnerabilities at the time, after upgrading Next.js from 16.4.0 to 16.4.6 |
 | `scripts/security-smoke.mjs` against the production Vercel deployment | 42 of 42, executed personally by the author |
 | `scripts/security-smoke.mjs` against the local public build | 42 of 42 |
 | gitleaks over the published git history | No leaks |
-| GitHub Actions CI on `main` | Passing: type check, lint, tests, audit, public build, smoke test against that build |
+| GitHub Actions CI on `main` | Passing: type check, lint, tests, root dependency audit, public build, smoke test against that build |
+
+### Fixture dependencies — 25 November 2026
+
+The audit result above covers the root application only. The two fixture apps have their own lockfiles.
+
+| Check | Result |
+|---|---|
+| `npm audit --package-lock-only` in `fixtures/dashdish/base` | 11 advisories: 2 critical, 1 high, 8 moderate. Ten against `next` 16.4.0, one against `minimatch` 10.2.6 (dev) |
+| `npm audit --package-lock-only` in `fixtures/ledgerly/base` | The same 11 |
+| GitHub Dependabot | Reported 22 alerts on push (4 critical, 2 high, 16 moderate). The alerts could not be read directly; the totals match the two audits above |
+
+The fixtures are pinned on purpose: their deterministic commits are what the recorded evidence and the run records below refer to. The public demo serves recorded static exports of DashDish and does not run a fixture Next.js server. A fixture server does run inside the private sandbox for Ledgerly, and whenever a fixture is run directly; it should not be exposed publicly. Upgrading the fixtures and re-recording the evidence is future maintenance. Advisory IDs, risk assessment and the status of earlier deployments: [SECURITY_AUDIT.md](SECURITY_AUDIT.md#fixture-dependency-advisories-25-november-2026).
 
 **Not repeated in November:** Docker worker execution, the Chromium journeys, operator authentication over HTTP, and browser automation of the interface. Their most recent results are from October 2026 and are recorded below. The public demo replays the runs recorded on 10 October 2026.
 
@@ -43,7 +55,7 @@ Full report: [SECURITY_AUDIT.md](SECURITY_AUDIT.md). Summary of what was execute
 | Simulated public runtime: unprivileged, read-only tree, no `.data`, no git | `scripts/security-smoke.mjs`: 42/42. OFF "Scheduled delivery was added, but regular checkout broke." (39 s); ON "Scheduled delivery works. Regular checkout still works." (48 s). 0 POSTs; axe: 0 violations on 9 screens; no overflow from 390 to 1440 px |
 | Private live runs after the hardening | OFF run_z4q0ahoIMqxc failed as expected (80 s; 10 journey frames). Repair of an OFF run refused (409). ON detected the regression and repaired and verified it (174 s) |
 | Operator auth over HTTP | `__Host-pl_session` cookie (httpOnly, Secure, Lax). A copied cookie was rejected after sign-out (401). A cross-site POST got 403. 12 wrong codes led to "limited" |
-| `npm audit --omit=dev`, gitleaks | 0 vulnerabilities; no leaks (5 reviewed fake test tokens, then listed in `.gitleaksignore`; now allowed by exact value in `.gitleaks.toml`) |
+| `npm audit --omit=dev` (root application), gitleaks | 0 vulnerabilities at the time; no leaks (5 reviewed fake test tokens, then listed in `.gitleaksignore`; now allowed by exact value in `.gitleaks.toml`) |
 
 ### One prompt, two outcomes — 11 October 2026
 
