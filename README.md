@@ -6,6 +6,32 @@
 
 ProofLayer takes a code change, as an AI coding agent would produce it, and runs it through checks the agent cannot influence: install, lint, types, tests and a production build in a network-less Docker sandbox, then customer journeys in headless Chromium. The verdict is decided from exit codes, with the evidence kept beside it. Its regression gate, **NeverBreak**, re-checks the journeys that passed before the change and, when one breaks, verifies a controlled repair the same way.
 
+```mermaid
+flowchart TB
+  subgraph WITHOUT["Without ProofLayer"]
+    direction LR
+    a1["AI agent adds<br/>a feature"] --> a2["Agent says<br/>the tests pass"]
+    a2 --> a3["Change ships<br/>unchecked"]
+    a3 --> a4["An existing flow breaks<br/>and a customer finds it"]
+  end
+  subgraph WITH["With ProofLayer"]
+    direction LR
+    b1["AI agent adds<br/>a feature"] --> b2["Independent checks<br/>sandbox and browser"]
+    b2 --> b3{"Protected flows<br/>still pass?"}
+    b3 -- "no" --> b4["Regression caught<br/>before release"]
+    b4 --> b5["Controlled repair<br/>isolated branch"]
+    b5 -. "verified again" .-> b2
+    b3 -- "yes" --> b6["Verified, with evidence<br/>a person decides what to merge"]
+  end
+  WITHOUT ~~~ WITH
+  classDef bad stroke:#cf222e,stroke-width:2px
+  classDef good stroke:#2da44e,stroke-width:2px
+  class a4,b4 bad
+  class b6 good
+```
+
+The repair is controlled, not generated: it restores code known to have passed, or applies a fix written in advance. Nothing is merged or deployed automatically.
+
 This is an independent prototype, not a product. It is not affiliated with any company, verifies two fictional demo apps, and has no users.
 
 <table>
@@ -40,37 +66,49 @@ The checks, browser journeys and evidence are genuine. The change and the repair
 
 DashDish is a fictional food-delivery app kept as a real git repository with deterministic commits. One request is supported: *"Add scheduled food delivery for tomorrow."*
 
-| Revision | Commit | Recorded result |
-|---|---|---|
-| Original | `0c4e1f8` | **Passed.** Regular checkout reaches "Order confirmed" in Chromium |
-| Prepared change | `9b70678` | **Failed.** Expected `Order confirmed`, received `Choose a delivery time` |
-| Prepared repair | `2341e46`, applied as `e34e22a` | **Passed.** 5 protected flows and the change's 3 new checks |
+```mermaid
+flowchart LR
+  A["Original<br/>0c4e1f8<br/>regular checkout ✓"] --> B["Prepared change<br/>9b70678<br/>adds scheduled delivery"]
+  B --> C["Checked<br/>scheduled ✓ regular ✗<br/>stops at Choose a delivery time"]
+  C --> D["Regression<br/>detected"]
+  D --> E["Prepared repair<br/>2341e46<br/>on an isolated branch"]
+  E --> F["Verified again<br/>e34e22a<br/>scheduled ✓ regular ✓"]
+  classDef good stroke:#2da44e,stroke-width:2px
+  classDef bad stroke:#cf222e,stroke-width:2px
+  class A,F good
+  class C,D bad
+```
+
+The change and the repair were both written in advance; the checks and browser journeys that judged them are recorded runs.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  subgraph Public["Public demo (Vercel) — read-only"]
-    V[Anonymous visitor] -->|GET only| P[proxy.ts<br/>GET/HEAD only, operator paths 404, nonce CSP]
-    P --> N[Next.js pages + read APIs]
-    N --> S[(.demo-snapshot<br/>SQLite read-only + frames + builds + recorded repo JSON)]
-  end
-  subgraph Private["Private installation — operator's machine"]
-    O[Operator] -->|session cookie, same-origin| A[Next.js app + API]
-    A --> D[(.data<br/>SQLite, artifacts, fixture git repos)]
-    W[Worker] --> D
-    W -->|exact commit, no network| X[Docker sandbox<br/>lint · tsc · tests · next build]
-    W -->|confined to the app container| C[Headless Chromium<br/>customer journeys]
-    W -->|neverbreak/repair-* only| G[(Fixture git repos)]
-  end
-  R[(demo/recorded/dashdish<br/>committed, SHA-256 manifest)] -->|build time: import + snapshot| S
+  C["Git commit<br/>exact SHA"] --> W["Verification worker<br/>independent of the agent"]
+  W --> D["Docker sandbox<br/>lint, types, tests, build"]
+  W --> B["Headless Chromium<br/>customer journeys"]
+  D --> E[("Recorded evidence<br/>logs, hashes, frames")]
+  B --> E
+  E --> V["Verdict engine<br/>and NeverBreak"]
+  V --> P(["Passed"])
+  V --> R(["Regression"])
+  V --> I(["Incomplete evidence"])
+  R --> F["Controlled repair<br/>isolated branch, two attempts at most"]
+  F -. "verified as a new commit" .-> W
+  classDef good stroke:#2da44e,stroke-width:2px
+  classDef bad stroke:#cf222e,stroke-width:2px
+  classDef warn stroke:#bf8700,stroke-width:2px
+  class P good
+  class R bad
+  class I warn
 ```
 
-- **The web app never executes checked code.** It reads the database. Only the worker runs code: inside Docker, or as a confined browser.
-- **One source of truth.** Verdicts come from one function (`lib/shared/verdict.ts`), from exit codes. Infrastructure errors, timeouts and skipped checks become *incomplete*, never *failed* or *passed*. Browser frames and AI text never feed into a verdict.
-- **The public deployment has no worker, Docker, git, secrets or sign-in.** It reads an immutable snapshot built from the committed recorded package.
+- **Verdicts come from recorded evidence.** One function (`lib/shared/verdict.ts`) decides from exit codes. Infrastructure errors, timeouts and skipped checks become *incomplete*, never *passed* or *failed*. Browser frames and AI text never feed into a verdict.
+- **Private live worker.** The pipeline above runs only on a private machine with the worker and Docker. The web app never executes checked code; it reads what the worker recorded.
+- **Public read-only demo.** The hosted demo runs none of this. It has no worker, Docker, git, secrets or sign-in, and replays an immutable snapshot of runs recorded on the private worker.
 
-More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), including the request and verification lifecycle.
+Component view of both deployments, the sandbox and the request lifecycle: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Capabilities
 

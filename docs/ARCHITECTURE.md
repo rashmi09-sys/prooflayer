@@ -97,6 +97,28 @@ Not built
 
 Hosted deployment, Supabase (migration written, never run), multi-tenant isolation, gVisor-class runtime.
 
+## Deployments: public demo and private installation
+
+The public demo and the private installation are separate. Only the private installation executes code.
+
+```mermaid
+flowchart LR
+  subgraph Public["Public demo (Vercel) — read-only"]
+    V[Anonymous visitor] -->|GET only| P[proxy.ts<br/>GET/HEAD only, operator paths 404, nonce CSP]
+    P --> N[Next.js pages + read APIs]
+    N --> S[(.demo-snapshot<br/>SQLite read-only + frames + builds + recorded repo JSON)]
+  end
+  subgraph Private["Private installation — operator's machine"]
+    O[Operator] -->|session cookie, same-origin| A[Next.js app + API]
+    A --> D[(.data<br/>SQLite, artifacts, fixture git repos)]
+    W[Worker] --> D
+    W -->|exact commit, no network| X[Docker sandbox<br/>lint · tsc · tests · next build]
+    W -->|confined to the app container| C[Headless Chromium<br/>customer journeys]
+    W -->|neverbreak/repair-* only| G[(Fixture git repos)]
+  end
+  R[(demo/recorded/dashdish<br/>committed, SHA-256 manifest)] -->|build time: import + snapshot| S
+```
+
 ## Request and verification lifecycle
 
 **Recorded mode** (public demo, or any installation without a worker):
