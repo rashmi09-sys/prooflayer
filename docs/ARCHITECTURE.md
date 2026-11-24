@@ -96,3 +96,19 @@ Local repos under the data directory, or one allowlisted GitHub repo with a read
 Not built
 
 Hosted deployment, Supabase (migration written, never run), multi-tenant isolation, gVisor-class runtime.
+
+## Request and verification lifecycle
+
+**Recorded mode** (public demo, or any installation without a worker):
+1. The prompt is matched in the browser.
+2. The recorded runs for that scenario are replayed from stored timestamps, labelled "Recorded demonstration".
+3. The page makes no server writes.
+
+**Live mode** (private, operator signed in, worker and Docker running):
+
+1. `POST /api/projects/dashdish/requests` with `{ prompt, protection }`. The server checks the operator session, same-origin, the body schema, the same deterministic matcher, and the worker heartbeat. It then queues the prepared revision for that scenario.
+2. The worker claims the run. It exports the exact commit, runs `npm ci` on the host under a fixed policy (registry-only lockfile, pinned npm config, no scripts, no git), and then runs each check in Docker with no network.
+3. After a passing build, it serves the static export on an internal Docker network and runs the customer journeys in Chromium, confined to that container.
+4. Every state change is written to SQLite. The page polls and shows only what was recorded.
+5. **Protection ON:** if a protected flow failed, the page requests the controlled repair. The worker verifies each attempt as a normal run on `neverbreak/repair-*`.
+6. **Protection OFF:** no repair, and the API refuses one (409).

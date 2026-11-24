@@ -10,7 +10,7 @@ Scope: the whole repository at the audited commit: the Next.js app (routes, API,
 - A browser QA pass.
 - A separate reviewer that had not seen the work audited the fixes; its findings are included below and were fixed.
 
-This is a portfolio prototype prepared for a public, read-only demonstration. It is not a production service, and passing these checks does not make it one.
+This is a prototype prepared for a public, read-only demonstration. It is not a production service, and passing these checks does not make it one.
 
 ## Decision
 
@@ -244,9 +244,10 @@ Repeated before making the repository public, on the published history.
 | `tsc --noEmit`, `eslint .` | Clean |
 | `npm run build` and `npm run build:public` | Both succeed |
 | `scripts/security-smoke.mjs` against the local public build | **42 / 42** |
+| `scripts/security-smoke.mjs` against the production Vercel deployment, run by the author | **42 / 42** |
 | gitleaks 8.21.2 on every commit of the published history | **No leaks.** The two synthetic values used by the redaction tests are allowed by exact value in `.gitleaks.toml`; the default rules stay on and nothing is allowed by path or by commit |
 
-Not repeated for this check: the Docker worker, the Chromium journeys, the operator authentication tests over HTTP and the simulated Vercel runtime. The smoke test was run against a local public build, not against the hosted demo.
+Not repeated for this check: the Docker worker, the Chromium journeys, the operator authentication tests over HTTP and the simulated Vercel runtime.
 
 ## Residual risks
 
@@ -263,7 +264,7 @@ Not repeated for this check: the Docker worker, the Chromium journeys, the opera
 
 ## Unverified assumptions
 
-- **No real Vercel deploy was done during the audit.** The audit had no Vercel access. A deployment was simulated as listed above. The demo has since been deployed to Vercel, but these assumptions and the smoke test were not re-checked against the hosted URL. The simulation assumed:
+- **No real Vercel deploy was done during the audit.** The audit had no Vercel access. A deployment was simulated as listed above. The demo has since been deployed to Vercel and the smoke test passes against the hosted URL (see the current verification); the individual assumptions below were not re-checked one by one. The simulation assumed:
   - Vercel's build image provides `git` and `bash`, which `demo:init` uses to recreate the fixture repositories.
   - Vercel uses Node ≥ 22.18, which the `engines` field requires.
   - Vercel honours `outputFileTracingIncludes` for `.demo-snapshot/`.

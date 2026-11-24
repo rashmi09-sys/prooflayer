@@ -2,7 +2,7 @@
 
 > Moved from the app into the repository: the public demo opens straight into the product, so the design and validation documentation lives here.
 
-An independent portfolio prototype: not an Emergent product, no access to any company's systems, no users. Here is exactly what works and how it was tested.
+An independent prototype: not affiliated with any company, no access to any company's systems, no users. Here is exactly what works and how it was tested.
 
 ## Feature validation
 
@@ -48,4 +48,4 @@ Feature validation table
 | Hosted deployment (Vercel UI + separate runner) | PLANNED | The UI could run on Vercel, but the worker needs a host with Docker. A GitHub Actions runner is the intended first step. |
 | Automatic rollback or pushing code | PLANNED | Deliberately out of scope. ProofLayer only reads code. |
 
-What it can't do yet: [limitations](/about/limitations). Invented runs for reviewing rare states (timeouts, cancellations, an AI explanation): [sample data](/sample), clearly bannered and never stored.
+What it can't do yet: [limitations](LIMITATIONS.md).

@@ -82,7 +82,7 @@ Live checks and repairs now also require a running worker: without one, the cont
 
 ## Public read-only demo — 11 October 2026
 
-The documentation pages (About, Background, Case study, What's real, Limitations, Walkthroughs) and sample-data mode were removed from the app; their content moved to `docs/`. The home link now opens the DashDish workspace with no sign-in. Probed against the production build (`next build && next start`) with no session cookie:
+The documentation pages (About, Background, Case study, What's real, Limitations, Walkthroughs) and sample-data mode were removed from the app; their content moved to `docs/` at the time. The case study and the walkthrough scripts were later removed from the repository. The home link now opens the DashDish workspace with no sign-in. Probed against the production build (`next build && next start`) with no session cookie:
 
 | Request | Result |
 |---|---|

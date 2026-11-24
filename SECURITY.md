@@ -1,6 +1,6 @@
 # Security policy
 
-ProofLayer is a portfolio prototype. The public deployment is a read-only demonstration: it has no sign-in, accepts no state-changing requests, runs no code and holds no secrets. Live verification exists only in private installations.
+ProofLayer is a prototype. The public deployment is a read-only demonstration: it has no sign-in, accepts no state-changing requests, runs no code and holds no secrets. Live verification exists only in private installations.
 
 ## Reporting a vulnerability
 

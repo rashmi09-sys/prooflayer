@@ -27,7 +27,7 @@ What ProofLayer does not do, stated plainly.
 -   SQLite on the worker host; the Supabase migration with Row Level Security is written but has never been executed.
 -   One operator account behind an access code, not a full identity provider. One run executes at a time; the live view polls once a second.
 -   AI explanations have only been tested for their failure states: no API key was available, so no real model response has been generated.
--   No usability testing with real people. Every design decision in the case study is labelled as a hypothesis.
+-   No usability testing with real people. The design decisions are hypotheses.
 
 ## The recorded demonstration
 
