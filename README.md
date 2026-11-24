@@ -12,7 +12,7 @@ flowchart TB
     direction LR
     a1["AI agent adds<br/>a feature"] --> a2["Agent says<br/>the tests pass"]
     a2 --> a3["Change ships<br/>unchecked"]
-    a3 --> a4["An existing flow breaks<br/>and a customer finds it"]
+    a3 --> a4["An existing flow can break<br/>and a customer finds it"]
   end
   subgraph WITH["With ProofLayer"]
     direction LR
@@ -87,7 +87,7 @@ The change and the repair were both written in advance; the checks and browser j
 flowchart LR
   C["Git commit<br/>exact SHA"] --> W["Verification worker<br/>independent of the agent"]
   W --> D["Docker sandbox<br/>lint, types, tests, build"]
-  W --> B["Headless Chromium<br/>customer journeys"]
+  D -- "build passed" --> B["Headless Chromium<br/>customer journeys"]
   D --> E[("Recorded evidence<br/>logs, hashes, frames")]
   B --> E
   E --> V["Verdict engine<br/>and NeverBreak"]
