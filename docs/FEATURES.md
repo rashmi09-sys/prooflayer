@@ -1,51 +1,57 @@
-# What's real
+# Feature status
 
-> Moved from the app into the repository: the public demo opens straight into the product, so the design and validation documentation lives here.
+What exists, where it runs, and the evidence for it. Run IDs and dates are in [VALIDATION.md](VALIDATION.md).
 
-An independent prototype: not affiliated with any company, no access to any company's systems, no users. Here is exactly what works and how it was tested.
+| Status | Meaning |
+|---|---|
+| **DEPLOYED DEMO** | Served by the public read-only deployment as recorded functionality. Nothing is executed there. |
+| **LOCAL VERIFIED** | Executed successfully on a private installation with the worker and Docker (October 2026). Not hosted. |
+| **PARTIALLY VALIDATED** | Implemented, but only part of it has been exercised: for example failure paths only. |
+| **FIXTURE** | Demo application or prepared data. |
+| **PLANNED** | Not implemented. |
+| **REMOVED** | Existed in an earlier iteration and is no longer in the application. |
 
-## Feature validation
+The deployed demo replays evidence that the private worker recorded. Features marked LOCAL VERIFIED produced that evidence but do not run in the deployment.
 
-**LIVE** integrated and tested in a deployed environment · **LOCAL ONLY** works and was tested on a local server · **EXAMPLE** labeled sample data or fixture · **PLANNED** not implemented. Nothing is deployed yet, so nothing is LIVE.
-
-Feature validation table
 | Feature | Status | Evidence |
-| --- | --- | --- |
-| DashDish showcase: “Watch NeverBreak in action” | LOCAL ONLY | Seven scenes (request, protection, checking, regression, repair, verification, proof) replayed from the timestamps of recorded runs at 4× speed; skippable, pausable, replayable, with reduced-motion support. “Check it live” queues a real run and follows the worker as it records each step. The closing line “Changes verified. Existing journeys protected.” appears only when the change passed or a repair kept its new feature; otherwise it says it rolled back or stopped. Driven end to end in Chromium on the production build. |
-| Customer journeys in Chromium | LOCAL ONLY | The static export of each commit is served inside the sandbox and Chromium (390×844 at 2×) follows server-defined journeys: regular checkout and scheduled checkout, from restaurant through dish customization (Large, extra cheese) to confirmation. Each step is saved as a frame; the last frame records what the journey expected and what the page showed. On 9b70678 regular checkout ended on “Choose a delivery time” and scheduled checkout reached “Order scheduled”. |
-| Interactive preview of a verified build | LOCAL ONLY | The exact static build a run produced is served from an unguessable per-run path (HMAC) with a sandboxing Content-Security-Policy, inside a sandboxed iframe: the phone in the workspace is the real app at that commit, labelled with its SHA. Needs the production server (npm start); the dev server blocks the preview's assets. |
-| NeverBreak: targeted repair that keeps the feature | LOCAL ONLY | Attempt 1 applies a prepared targeted fix from a prepared-fixes/\* branch whose parent is the broken commit (written in advance for this demo, not generated, and labelled so everywhere). It is committed on an isolated neverbreak/repair-\* branch and verified like any change: every protected flow plus the change's own new checks. It counts as “repaired” only if those new checks still pass; otherwise it is reported as a roll-back. Ran live: 9b70678 → e34e22a, 5 protected flows and 3 new checks passed, main untouched. |
-| NeverBreak: protected flows | LOCAL ONLY | Learned automatically from the last passing run: every leaf test the runner reported as passing, plus the built page opening in Chromium. Stored with the commit they came from. Each later run's result is read from its own recorded output. On Ledgerly: 4 flows from 9bc5d46; on DashDish: 5 flows from 0c4e1f8, one of them also checked by a Chromium journey. Unit tested on real node:test output. The plain-English flow names for the demo app were written by hand. |
-| NeverBreak: edited-test warning | LOCAL ONLY | Flags a flow when the change rewrote the test that protects it, even if that test now passes. Compares the test's body at the last passing commit and at the change, read from git. Caught the agent's edit of “adds tax to the subtotal” in 0579999 and 1df91de. |
-| NeverBreak: safe repair (no AI) | LOCAL ONLY | At most two attempts, each a real commit on a neverbreak/repair-\* branch made through a private git index, verified by a normal run. 1: the prepared targeted fix if one exists, otherwise restore the app code the change touched. 2: roll back the whole change, which is reported as a roll-back, never as a repair. Stops on the first pass, after two attempts, or when an attempt can't be verified. Ran for real, manually on 1df91de and automatically on 0579999: attempt 1 still failed (the change had rewritten a test), attempt 2 passed. Never touches main, never pushes. Demo repository only. |
-| NeverBreak: AI repair | PLANNED | Not built. No API key was available to test a model-written patch. The DashDish fix is a prepared patch, and is never presented as AI-generated. |
-| Sandboxed verification worker | LOCAL ONLY | Separate worker process. Lint, type check, tests and build run in Docker with no network, a read-only root, a non-root user, dropped capabilities, and CPU, memory, process and time limits. Ran against all three fixture commits. |
-| Pass and fail detection | LOCAL ONLY | Commit A passed; commit B failed type checking (TS2345 at app/page.tsx:21); commit C failed tests (expected $108.00, received $1.08). All from real exit codes. |
-| Visual proof (expected vs received, type mismatch, lint) | LOCAL ONLY | Parsed from recorded node:test, Jest/Vitest-style and TypeScript output; relationships such as “exactly 1/100” are plain arithmetic on the two values. Unit tested and shown for the real fixture failures. |
-| Source excerpts from the verified commit | LOCAL ONLY | The worker copies the lines around each parsed failure location from the exact commit before the workspace is deleted. Paths are confined to the workspace and redacted. Unit tested. |
-| Browser snapshot of the built app | LOCAL ONLY | After a passing build, the commit is served in the sandbox on an internal-only Docker network and headless Chromium opens “/”, clicks “Show breakdown” and captures a PNG stored with the run. Captured for real on the fixture (shows “Total due: $1.08” on the failing commit). Informational only; needs Chromium on the worker. |
-| Assertion values located in the rendered page | LOCAL ONLY | During the snapshot, Chromium searches the live DOM for the failing assertion's expected and received values and records where they render. On 1df91de it found “$1.08” in “Total due: $1.08” at (40, 314) and recorded that “$108.00” appears nowhere. The ring on the screenshot is drawn from those coordinates. Runs recorded before this existed show no ring. |
-| Investigation workspace | LOCAL ONLY | One page per run: the change's own claim, a step timeline, the app as Chromium rendered it, findings with expected vs received, rule-based next step, and a collapsible inspector for logs, commit and diagnostics. Polls recorded state every second; a step moves only when the worker records it. The proof reveal plays only when the page saw the run finish live. Driven end to end on real runs with browser automation at 1440, 1280, 1024, 768 and 390 px. |
-| Plain-language outcome | LOCAL ONLY | “The total due is wrong.” is built from the text Chromium found around the received value (“Total due: $1.08”); without that, it falls back to the test name or compiler message, and says which source it used. Unit tested. |
-| Investigation assistant | LOCAL ONLY | Five fixed prompts answered by deterministic functions over recorded evidence and git; every answer is labelled “From recorded evidence” or “Rule-based guidance”. No language model is involved. Unit tested. |
-| Guided walkthrough | LOCAL ONLY | Optional three-stop strip (watch, inspect, compare), never an overlay. Describes what is on screen; the recorded verification is labelled as recorded and nothing runs when it is opened. |
-| Cancellation | LOCAL ONLY | A real run was cancelled during the build step; the container was killed and the run recorded as Cancelled. |
-| Environment errors recorded as Incomplete | LOCAL ONLY | With the sandbox image removed, checks exited 125 and the run was recorded as Incomplete, not Failed. A stopped worker is also closed as Incomplete (unit tested). |
-| Persistent run history | LOCAL ONLY | SQLite with foreign keys, indexes and a schema-level verdict invariant. Survives server and worker restarts. |
-| Before and after comparison | LOCAL ONLY | Defaults to the last pass against the latest failure. Both real screenshots side by side, required checks that changed outcome (unit tested), and the actual git diff between the two commits, sanitized and size-capped. A passing revision is described only by the checks that ran on it. |
-| Recovery guidance | LOCAL ONLY | Jump to evidence, compare, rerun, copy a diagnostic summary, open a code location (GitHub only), and the last passing commit from recorded runs. |
-| Secret redaction and output limits | LOCAL ONLY | Known secret shapes and configured secret values are removed before storage; output is capped per step. Unit tested. |
-| Sign-in and per-user data scoping | LOCAL ONLY | One operator account behind an access code; HMAC-signed httpOnly session; same-origin checks on writes. Queries are scoped to the owner, tested with a second user. |
-| Job deduplication and stale-run recovery | LOCAL ONLY | One active run per commit (unique index); queued twice returns the same run. Runs from a dead worker are closed as Incomplete. |
-| GitHub repository integration | LOCAL ONLY | Metadata, branches, commits, commit resolution and tarball export tested against public octocat/Hello-World without a token. Not tested: a private repo with a token, and a full verification run of a GitHub repository. |
-| AI failure explanations (Anthropic) | LOCAL ONLY | Prompt fencing, redaction and output validation are unit tested. Missing-key and invalid-key paths tested against the real API (HTTP 401). A successful explanation has not been generated: no API key was available. |
-| Command palette, project switcher, Graphite theme | LOCAL ONLY | ⌘K / Ctrl+K palette and a project switcher listing only allowlisted projects. One dark Graphite theme with Geist type. Keyboard tested with browser automation. |
-| DashDish demo app | EXAMPLE | A fictional food delivery app (Next.js, static export) created by scripts/create-dashdish.sh: 0c4e1f8 works (restaurants, dish customization, cart, coupons, checkout), 9b70678 is the agent's change (scheduled delivery, which breaks regular checkout), and prepared-fixes/scheduled-delivery holds the reference fix. The agent request is scripted. Food images are original SVG illustrations, not photos. |
-| Ledgerly demo repository | EXAMPLE | A small Next.js invoicing app with three real commits on main, plus the three original commits on legacy-v1 so earlier runs stay reproducible. Created by scripts/create-fixture.sh. |
-| Sample data mode | REMOVED | Removed from the app when it became a public read-only demo. Was: Four invented runs for design review, including hand-written AI text. Never stored; every page carries a banner. |
-| Supabase Postgres with Row Level Security | PLANNED | Migration written in db/supabase/0001\_init.sql but never executed: Supabase was unreachable from the build environment. |
-| Supabase Auth, multiple users, onboarding | PLANNED | The data model already scopes everything by owner. |
-| Hosted deployment (Vercel UI + separate runner) | PLANNED | The UI could run on Vercel, but the worker needs a host with Docker. A GitHub Actions runner is the intended first step. |
-| Automatic rollback or pushing code | PLANNED | Deliberately out of scope. ProofLayer only reads code. |
+|---|---|---|
+| **Deployed demo** | | |
+| Recorded replay: one request, NeverBreak OFF and ON | DEPLOYED DEMO | The DashDish request replayed from the timestamps of the recorded runs. OFF ends on "Scheduled delivery was added, but regular checkout broke."; ON ends on "Scheduled delivery works. Regular checkout still works." Labelled "Recorded demonstration". Driven in Chromium against a simulated public runtime in October (0 POSTs). The hosted deployment passed the 42-check smoke test on 24 Nov 2026; the hosted replay was not re-driven by browser automation. |
+| Recorded run pages, protected flows and comparison | DEPLOYED DEMO | Read-only pages for the three recorded DashDish runs: checks, parsed proof, Chromium frames, per-flow results, before and after. Raw logs are withheld from visitors. |
+| Interactive preview of a recorded build | DEPLOYED DEMO | The static build each recorded run produced, served from a per-run path with a sandboxing Content-Security-Policy inside a sandboxed iframe, labelled with its SHA. |
+| Read-only enforcement | DEPLOYED DEMO | `proxy.ts` allows only GET and HEAD and hides operator paths, every privileged route handler refuses on its own, and the snapshot database is opened read-only. Covered by `tests/public-demo.test.ts` and the hosted smoke test. |
+| Recorded package integrity | DEPLOYED DEMO | `demo/recorded/dashdish`: 3 runs, 105 files, each with a SHA-256 in the manifest. Import refuses a file that does not match (tested with one altered value). |
+| **Private live verification** | | |
+| Verification worker and sandbox | LOCAL VERIFIED | Separate worker process. `npm ci` on the host under the install policy; lint, type check, tests and build in Docker with no network, a read-only root, a non-root user, dropped capabilities, and CPU, memory, process and time limits. Ran against every fixture commit in October. |
+| Pass, fail, incomplete and cancelled verdicts | LOCAL VERIFIED | Ledgerly: one commit passed, one failed type checking (TS2345), one failed tests (expected $108.00, received $1.08), from recorded exit codes. With the sandbox image removed or the Docker daemon down, runs were recorded Incomplete, not Failed. A run cancelled during the build was recorded Cancelled and its container removed. |
+| Customer journeys in Chromium | LOCAL VERIFIED | After a passing build, the static export is served on an internal Docker network and Chromium (390×844) follows server-defined journeys: regular and scheduled checkout. Each step is saved as a hashed frame with expected and actual. On `9b70678` regular checkout stopped at "Choose a delivery time" and scheduled checkout reached "Order scheduled". |
+| Live request, protection OFF and ON | LOCAL VERIFIED | OFF: run_4xlRaMRsOuO7 failed as expected and the repair API refused (409). ON: run_27xA6MevsIMS failed, the prepared repair was verified in run_QTmiwrQOVgmR, outcome repaired. |
+| NeverBreak: protected flows | LOCAL VERIFIED | Learned from the last passing run: every passing leaf test, the page opening, and journeys that reached their expected screen. Ledgerly: 4 flows from `9bc5d46`. DashDish: 5 flows from `0c4e1f8`. Unit tested on recorded `node:test` output. The plain-English flow names for the fixtures were written by hand. |
+| NeverBreak: edited-test warning | LOCAL VERIFIED | Flags a flow when the change rewrote the test that protects it, even if the test now passes, by comparing the test body in git. Flagged the rewritten "adds tax to the subtotal" test in the Ledgerly fixture commits `0579999` and `1df91de`. |
+| Controlled repair: prepared fix | LOCAL VERIFIED | Attempt 1 applies a fix written in advance (`prepared-fixes/*`, parent is the broken commit) on an isolated `neverbreak/repair-*` branch and verifies it as a normal run. Counts as "repaired" only if the change's new checks still pass. Ran live: `9b70678` → `e34e22a`, 5 protected flows and 3 new checks passed, `main` untouched. Not generated, and labelled so in the interface. |
+| Controlled repair: restore and roll back | LOCAL VERIFIED | Without a prepared fix: restore the code the change touched, then roll back the whole change. At most two attempts; a roll-back is reported as a roll-back. Ran on Ledgerly manually and automatically: attempt 1 failed (the change had rewritten a test), attempt 2 passed. Does not touch `main` and does not push. Local fixtures only. |
+| Structured proof and source excerpts | LOCAL VERIFIED | Expected versus received, type mismatches and lint locations parsed from recorded output; source lines around each failure copied from the exact commit. Unit tested and shown for the fixture failures. |
+| Page capture and located assertion values | LOCAL VERIFIED | Chromium captures the built page and searches the DOM for the failing assertion's values. On `1df91de` it found "$1.08" in "Total due: $1.08". Informational: it does not change a verdict. |
+| Run history, deduplication and stale-run recovery | LOCAL VERIFIED | SQLite with foreign keys and a schema-level verdict invariant. One active run per commit; a run left by a stopped worker is closed as Incomplete. |
+| Secret redaction and output limits | LOCAL VERIFIED | Known secret shapes and configured secret values are removed before storage; output is capped per step. Unit tested. |
+| Operator sign-in | LOCAL VERIFIED | One operator behind an access code; HMAC-signed `__Host-` session cookie; origin checks on writes; sign-in limits; sign-out revokes earlier sessions. Tested over HTTP in October. |
+| Run investigation page | LOCAL VERIFIED | Step timeline, findings, log inspector, a rule-based assistant (five fixed prompts answered from recorded evidence and git, no language model) and a command palette. Driven with browser automation in the earlier October iterations; not re-driven after the workspace was rebuilt around the single request. |
+| **Partially validated** | | |
+| AI failure explanations (Anthropic) | PARTIALLY VALIDATED | Implemented, private mode only. Prompt fencing, redaction and output validation are unit tested. The missing-key path and a rejected key (HTTP 401 from the API) were exercised. No successful explanation has been generated. |
+| GitHub repository integration | PARTIALLY VALIDATED | Metadata, branches, commits, commit resolution and tarball export succeeded against public `octocat/Hello-World` without a token. Not tested: a token, a private repository, or a full verification run of a GitHub repository. |
+| Concurrent workers | PARTIALLY VALIDATED | Run claiming is atomic, but only one worker has been run. |
+| **Fixtures** | | |
+| DashDish demo app | FIXTURE | A fictional food-delivery app (Next.js static export) built by `scripts/create-dashdish.sh` with deterministic commits: `0c4e1f8` is the original, `9b70678` is the prepared change (adds scheduled delivery, breaks regular checkout), and `prepared-fixes/scheduled-delivery` holds the prepared repair `2341e46`. The request is scripted. |
+| Ledgerly demo repository | FIXTURE | A small Next.js invoicing app with three commits on `main`, plus three earlier commits on `legacy-v1` so early runs stay reproducible. Built by `scripts/create-fixture.sh`. |
+| **Planned** | | |
+| AI-written repair | PLANNED | Not built. |
+| Hosted live verification | PLANNED | The public demo is hosted; the worker is not. It needs a host with Docker. |
+| Postgres storage, multiple users | PLANNED | A Supabase migration exists in `db/supabase/0001_init.sql`; it has never been applied or tested. |
+| **Removed** | | |
+| Seven-scene presentation and guided walkthrough | REMOVED | Earlier interface iterations, replaced by the single-request workspace. They appear in the historical sections of [VALIDATION.md](VALIDATION.md). |
+| In-app documentation pages | REMOVED | Moved to `docs/` when the app became a public read-only demo. |
+| Sample data mode | REMOVED | Four invented runs used for design review, removed before the public demo. |
 
-What it can't do yet: [limitations](LIMITATIONS.md).
+Deliberately out of scope: merging, pushing or deploying code. ProofLayer writes only to isolated repair branches in the local fixture repositories.
+
+Scope and boundaries: [LIMITATIONS.md](LIMITATIONS.md).

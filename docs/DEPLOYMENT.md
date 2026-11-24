@@ -8,7 +8,7 @@ ProofLayer is deployed in two separate shapes. They share code, never data or cr
 | Data | `.demo-snapshot/`, built during the build from the committed recorded package, opened read-only | `.data/`: SQLite, artifacts, fixture git repositories |
 | Visitors | Anonymous, read-only | Anonymous read-only view, plus one operator who signs in at `/operator` |
 | Worker, Docker, git | None, by construction | Required for live verification and repairs |
-| Secrets | None | Access code and session secret; optionally Anthropic and GitHub keys |
+| Secrets | None configured. Operator credentials and API keys are ignored in this mode even if set | Access code and session secret; optionally Anthropic and GitHub keys |
 
 ## How the public build works
 
@@ -107,8 +107,8 @@ Sign in at `/operator`. The worker refuses to start in public-demo mode. For har
 
 ## Rollback
 
-Vercel keeps every deployment. To roll back:
-- **Dashboard:** under **Deployments**, choose an earlier deployment and **Promote to Production**.
-- **CLI:** run `vercel rollback`.
+Prefer rolling forward: fix on `main` and redeploy.
 
-Nothing in the public deployment holds state, so a rollback has no data to migrate.
+If a rollback is needed, Vercel keeps earlier deployments (**Deployments → Promote to Production**, or `vercel rollback`). Only promote a deployment built from commit `1638106` or later, which is where Next.js was upgraded to 16.4.6. Deployments built before that commit use Next.js 16.4.0, which has published security advisories, and should not be restored.
+
+The public deployment serves an immutable snapshot built into it and writes nothing at runtime, so a rollback has no data to migrate.

@@ -1,6 +1,36 @@
-# Feature validation report
+# Validation
 
-## Security audit and public read-only release — 11 October 2026
+## Latest verification — 24 November 2026
+
+Run on the published history before the repository was made public.
+
+| Check | Result |
+|---|---|
+| Automated tests (`npm test`) | 141 of 141 pass |
+| Type checking (`tsc --noEmit`) and lint (`eslint .`) | Clean |
+| `npm run build` and `npm run build:public` | Both succeed |
+| `npm audit` and `npm audit --omit=dev` | 0 vulnerabilities at the time, after upgrading Next.js from 16.4.0 to 16.4.6 |
+| `scripts/security-smoke.mjs` against the production Vercel deployment | 42 of 42, executed personally by the author |
+| `scripts/security-smoke.mjs` against the local public build | 42 of 42 |
+| gitleaks over the published git history | No leaks |
+| GitHub Actions CI on `main` | Passing: type check, lint, tests, audit, public build, smoke test against that build |
+
+**Not repeated in November:** Docker worker execution, the Chromium journeys, operator authentication over HTTP, and browser automation of the interface. Their most recent results are from October 2026 and are recorded below. The public demo replays the runs recorded on 10 October 2026.
+
+**Never validated:** a successful AI explanation, a full verification run of a GitHub repository, the Supabase migration, concurrent workers, and any testing with external users.
+
+## Historical validation — October 2026
+
+The record of what was executed while the prototype was built, newest first, with run IDs, commit SHAs and outcomes. It is kept as evidence and has not been rewritten.
+
+Read it as history:
+
+- **Interface.** Navigation, page names, button labels, screenshots, walkthroughs and scene counts describe the iteration being tested. Several were later replaced or removed; [FEATURES.md](FEATURES.md) lists what exists now.
+- **Test counts** (34, 44, 46, 62, 72, 73, 79, 108, 112) are the suite size at that point. The current suite is 141.
+- **"Not tested" lists** are as of their date. Since then the read-only demo has been deployed to Vercel and smoke-tested there.
+- **Access behaviour** changed during the security audit: visitors to the public demo can no longer open the Ledgerly project, and refused requests return different status codes than in the earliest sections.
+
+### Security audit and public read-only release — 11 October 2026
 
 Full report: [SECURITY_AUDIT.md](SECURITY_AUDIT.md). Summary of what was executed after the fixes:
 
@@ -15,7 +45,7 @@ Full report: [SECURITY_AUDIT.md](SECURITY_AUDIT.md). Summary of what was execute
 | Operator auth over HTTP | `__Host-pl_session` cookie (httpOnly, Secure, Lax). A copied cookie was rejected after sign-out (401). A cross-site POST got 403. 12 wrong codes led to "limited" |
 | `npm audit --omit=dev`, gitleaks | 0 vulnerabilities; no leaks (5 reviewed fake test tokens, then listed in `.gitleaksignore`; now allowed by exact value in `.gitleaks.toml`) |
 
-## One prompt, two outcomes — 11 October 2026
+### One prompt, two outcomes — 11 October 2026
 
 The workspace is now one request with a **NeverBreak protection: OFF / ON** toggle. Results below are from this machine; “fresh install” means `git archive` of the commit into an empty directory, `npm ci`, `npm run demo:init`, `npm run build`, `npm start`, with no Docker, no worker and no environment variables.
 
@@ -36,7 +66,7 @@ The workspace is now one request with a **NeverBreak protection: OFF / ON** togg
 | Layout | No horizontal overflow on home or result at 390, 768, 1024, 1280, 1440 px; no page errors |
 | Static checks | `tsc`, `eslint`, 112/112 unit tests (new: `tests/protection.test.ts`, 4), `next build` |
 
-## Prompt-first workspace — 11 October 2026
+### Prompt-first workspace — 11 October 2026
 
 The DashDish workspace now starts with a prompt composer. A deterministic matcher (`lib/shared/intent.ts`) decides the scenario; the mode is decided by the server's answer to “operator, worker online and Docker sandbox available”.
 
@@ -53,7 +83,7 @@ The DashDish workspace now starts with a prompt composer. A deterministic matche
 | Layout | No horizontal overflow on home or story at 390, 768, 1024, 1280 and 1440 px; no page errors |
 | Static checks | `tsc`, `eslint`, 108/108 unit tests, `next build` |
 
-## Recorded demonstration package — 11 October 2026
+### Recorded demonstration package — 11 October 2026
 
 The genuine DashDish story was exported from the machine that recorded it (`npm run demo:export`) into `demo/recorded/dashdish`: 3 runs, 27 checks, 25 Chromium frames, the 3 kept static builds, 15 run events, the repair and its attempt, the 5 protected flows, and the repair commit `e34e22a` as a git bundle. 105 files, each with its SHA-256 in `manifest.json`; installation-specific ids (owner, project, connection, worker) are dropped, and the exporter refuses to write if any configured secret value appears in the data.
 
@@ -80,7 +110,7 @@ Two defects found and fixed during this test:
 
 Live checks and repairs now also require a running worker: without one, the controls aren't shown, `POST /api/runs` returns 503 and repair is unavailable, so nothing is queued that would never run.
 
-## Public read-only demo — 11 October 2026
+### Public read-only demo — 11 October 2026
 
 The documentation pages (About, Background, Case study, What's real, Limitations, Walkthroughs) and sample-data mode were removed from the app; their content moved to `docs/` at the time. The case study and the walkthrough scripts were later removed from the repository. The home link now opens the DashDish workspace with no sign-in. Probed against the production build (`next build && next start`) with no session cookie:
 
@@ -103,11 +133,11 @@ The documentation pages (About, Background, Case study, What's real, Limitations
 - No horizontal overflow on 8 public pages at 1440, 1280, 1024, 768 and 390 px; no page errors.
 - `tsc`, `eslint`, 79/79 unit tests (including `tests/public-access.test.ts`), and `next build` pass. The build's file-tracing warning (the data directory could be traced into a deployment bundle) was fixed.
 
-## Version six: the DashDish signature experience — 9–10 October 2026
+### Version six: the DashDish signature experience — 9–10 October 2026
 
 Same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 141). The live runs were started from the UI of the production build (`next build && next start`) with the worker and Docker running. Nothing below was simulated, and no outcome is stored in the interface: every state on screen is read from these runs.
 
-### The three revisions, executed
+#### The three revisions, executed
 
 The DashDish history was regenerated once during this version, after dish customization (size, add-ons) was added to the app and to both browser journeys. The runs below are on the final history; the first history (`e5a9822`, `f812ee4`, `c57b122`) is kept locally on `legacy-v1` so its earlier runs stay reproducible, and behaved identically (A passed, B failed at the same assertion, the prepared fix repaired it three times).
 
@@ -117,7 +147,7 @@ The DashDish history was regenerated once during this version, after dish custom
 | run_f5x77LADlNfm, run_hNpjuKUhRQ7V | B `9b70678` | **Failed** both times, at tests only: “completes a regular checkout” expected 'Order confirmed', received 'Choose a delivery time' (1 failing, 5 passing). In Chromium: scheduled checkout reached “Order scheduled”; regular checkout ended on “Choose a delivery time”, located in the DOM and ringed on the frame. 10 frames recorded, including the dish customization screen |
 | run_yeShHEU1VkqA | C applied as repair `e34e22a` | **Passed** in 43 s: 6 tests, both journeys reached their expected screens. 5 protected flows plus the change's 3 new checks (“schedules an order for tomorrow”, “asks for a delivery window when scheduling”, the scheduled-checkout journey) |
 
-### Repair, live from the button
+#### Repair, live from the button
 
 | Repair | Source run | Attempt 1 | Outcome |
 |---|---|---|---|
@@ -130,15 +160,15 @@ The DashDish history was regenerated once during this version, after dish custom
 - Protected flows were relearned from run_JhO1VOli1qxL: 5 flows, including “Choose a size and add-ons”.
 - Unit test: “tries a prepared targeted fix first, then a roll-back”.
 
-### Infrastructure failure stays Incomplete
+#### Infrastructure failure stays Incomplete
 
 run_HQ0bQhVgjk8X (first-history A, `e5a9822`) ran while the Docker daemon was down after an environment restart. It was recorded **Incomplete**, not Failed, confirming the version-five classifier fix. Docker was restarted and A was rerun (run_rrruZdIYYLEO). The environment restarted a second time later with Docker down again; the daemon was restarted before any further run.
 
-### Ledgerly still intact
+#### Ledgerly still intact
 
 run_ubtIGjC9XGNi (`1df91de`, after all DashDish changes): prepare, install, lint, types, build and the browser step passed; tests failed with exit 1, as before. The Ledgerly workspace, flows, compare and run pages render under the Graphite theme.
 
-### Interface checks (browser automation)
+#### Interface checks (browser automation)
 
 | Check | Result |
 |---|---|
@@ -153,25 +183,25 @@ run_ubtIGjC9XGNi (`1df91de`, after all DashDish changes): prepare, install, lint
 | Reduced motion | Replay still works; motion is removed (MotionConfig `reducedMotion="user"`, CSS animations off) |
 | Static checks | `tsc` clean, `eslint` clean, 73/73 unit tests, `next build` succeeds |
 
-### Not done
+#### Not done
 
 - No real food photography: image hosts were unreachable from the build environment. Original SVG illustrations are used and labelled in Limitations.
 - No AI-generated repair: no API key. Revision C is a prepared reference fix.
 - No usability testing with people.
 
-## Version five: NeverBreak — 9 October 2026
+### Version five: NeverBreak — 9 October 2026
 
 Same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 141). The final runs were started from the UI of the production build (`next build && next start`) with the worker and Docker running. Nothing below was simulated.
 
-### Protected flows
+#### Protected flows
 
 | Check | Result |
 |---|---|
 | Learned automatically | 4 flows from the passing run of `9bc5d46`: the three leaf tests node:test reported as passing, plus the page opening in Chromium. The describe block "invoice totals" was correctly excluded as a group |
 | Per-run results | Read from each run's recorded test output and browser step. `1df91de`: "Total due shows the right amount" failed with expected $108.00, actual $1.08; the other three passed. `0579999`: the page flow failed (no build) and the total flow failed |
-| Edited-test warning | Both AI commits rewrote "adds tax to the subtotal" to expect `"108.00"`. NeverBreak flagged "Its test was edited" by comparing that test's body in git at `9bc5d46` and at the change |
+| Edited-test warning | Both fixture commits (written to stand in for an agent's change) rewrote "adds tax to the subtotal" to expect `"108.00"`. NeverBreak flagged "Its test was edited" by comparing that test's body in git at `9bc5d46` and at the change |
 
-### Safe repair: real sequences
+#### Safe repair: real sequences
 
 | Source run | Trigger | Attempt 1: restore app code | Attempt 2: roll back | Outcome |
 |---|---|---|---|---|
@@ -181,18 +211,18 @@ Same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 141). The final 
 
 Each attempt is a real commit on `neverbreak/repair-<id>-<n>`, made through a private git index. After all of this, `main` still points at `1df91de` and the fixture's working tree has no changes. Attempt 1 fails for a real reason: restoring the code alone doesn't satisfy the test the agent had rewritten. The interface says that the passing repair is a roll-back, so the change itself isn't included.
 
-### A bug this found, and the fix
+#### A bug this found, and the fix
 
 The environment restarted with the Docker daemon down. The first repair's two attempt runs recorded lint, types, tests and build as **code failures**: the Docker CLI exits 1 (not 125) when it can't reach the daemon. The classifier now treats "Cannot connect to the Docker daemon" (and image-missing) output as an infrastructure error, so such runs become Incomplete, and a repair stops instead of continuing. The two invalid runs and their branches were deleted; the repair was rerun with Docker up.
 
-### Other real runs
+#### Other real runs
 
 | Run | Commit | Result |
 |---|---|---|
 | run_ObtsD4OTUPSY | `9bc5d46` | Passed: "Everything that worked still works. All 4 protected flows passed." |
 | run_eCewcGmeVokP | `9bc5d46` | Passed; captured mid-run for the live screenshot |
 
-### Interface
+#### Interface
 
 | Check | Result |
 |---|---|
@@ -201,19 +231,17 @@ The environment restarted with the Docker daemon down. The first repair's two at
 | Keyboard | Skip link first; every stop on the Workspace has a visible focus ring |
 | Static checks | `tsc` 0 errors · ESLint 0 problems · 72/72 unit tests (10 new, using real recorded TAP output) · production build OK |
 
-### Not tested
+#### Not tested
 
 - AI repair (not built; no API key).
 - Repair on a GitHub repository (unsupported by design: read-only).
 - The flow-first framing with real users.
 
----
-
-## Version four: investigation workspace — 9 October 2026
+### Version four: investigation workspace — 9 October 2026
 
 Executed on the same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 141). Three of the four runs below were started from the UI of the production build (`next build && next start`) with the worker and Docker sandbox running. Nothing below was simulated.
 
-### Real runs
+#### Real runs
 
 | Run | Commit | How it was started | Result |
 |---|---|---|---|
@@ -222,7 +250,7 @@ Executed on the same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 
 | run_WhM9xCcCtZoB | `1df91de` | **Verify** page, production build, reduced motion | Failed at tests; found a bug: under reduced motion the staged reveal still delayed visibility (fixed: no staging when reduced motion is set) |
 | run_mGFAq5Vkt3FM | `1df91de` | **Verify** page, production build, reduced motion, after the fix | Failed at tests; all evidence visible at once at completion. Screenshot SHA-256 `dfb5fee1…727bca` matches the stored file |
 
-### Integrity checks
+#### Integrity checks
 
 | Check | Result |
 |---|---|
@@ -235,7 +263,7 @@ Executed on the same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 
 | Before and after | Defaults to the last pass (`9bc5d46`) against the latest failure (`1df91de`): both real screenshots, 1 check changed (tests), git diff showing the double cents-to-dollars conversion |
 | Diff route | Requires a session and full 40-character SHAs; invalid SHA rejected |
 
-### Interface
+#### Interface
 
 | Check | Result |
 |---|---|
@@ -245,18 +273,16 @@ Executed on the same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 
 | Themes | Light (default), Graphite and System; step glyph contrast fixed in Graphite |
 | Static checks | `tsc` 0 errors · ESLint 0 problems · 62/62 unit tests · production build OK |
 
-### Not tested (in addition to the list at the end)
+#### Not tested (in addition to the list at the end)
 
 - The walkthrough and the assistant with real people.
 - Screen-reader output of the staged reveal with real assistive technology.
 
----
-
-## Version three: product-first UX — 9 October 2026
+### Version three: product-first UX — 9 October 2026
 
 Executed on the production build (`next build && next start`) with the worker and Docker sandbox running. Nothing below was simulated.
 
-### Real runs started from the new UI
+#### Real runs started from the new UI
 
 | Run | Commit | How it was started | Result |
 |---|---|---|---|
@@ -264,7 +290,7 @@ Executed on the production build (`next build && next start`) with the worker an
 | run_HgSbnWn4asiM | `9bc5d46` | Verify studio, commit selected, **Run verification** | Passed in 43 s; stage header "All 5 checks passed" |
 | run_xXqpex91O8A4 | `0579999` | Guided demo | Failed at type check; stage showed "No screenshot: no successful build to serve" |
 
-### Screenshot linkage
+#### Screenshot linkage
 
 | Check | Result |
 |---|---|
@@ -274,7 +300,7 @@ Executed on the production build (`next build && next start`) with the worker an
 | DOM annotations | `1df91de`: received "$1.08" found in "Total due: $1.08" at (40, 314, 218×34); expected "$108.00" not found. `9bc5d46`: no failing assertion, nothing searched |
 | Unit tests | Annotations round-trip; artifacts hidden from other users and other runs; old databases gain the `annotations` column |
 
-### Interface
+#### Interface
 
 | Check | Result |
 |---|---|
@@ -287,13 +313,11 @@ Executed on the production build (`next build && next start`) with the worker an
 | Bugs found by this QA and fixed | Highlight label overlapped page text; value tiles wrapped "$108.00" in narrow columns (moved to container queries); palette input drew a stray focus ring (global focus rule moved into the base layer); commit badges went stale after a run |
 | Static checks | `tsc` 0 errors · ESLint 0 problems · 46/46 unit tests · production build OK |
 
----
-
-## Redesign — 9 October 2026
+### Redesign — 9 October 2026
 
 Everything in this section was executed after the redesign, on the same machine (Linux, Node 22.22, Docker 29.8, headless Chromium 141 from the Playwright cache). Anything not executed is listed under **Not tested** at the end.
 
-### Functionality preserved
+#### Functionality preserved
 
 | Check | Result |
 |---|---|
@@ -305,7 +329,7 @@ Everything in this section was executed after the redesign, on the same machine 
 | Live view | run_iNmp3FAitajI captured mid-run: seal arcs, timeline and live output followed recorded state only |
 | Static checks | `tsc` 0 errors; ESLint 0 problems; 44/44 unit tests; `next build` succeeds |
 
-### New capabilities
+#### New capabilities
 
 | Capability | How it was verified |
 |---|---|
@@ -318,20 +342,14 @@ Everything in this section was executed after the redesign, on the same machine 
 | Tabs and accordion | Arrow keys moved between failing-check tabs and switched the evidence; Enter expanded a step and showed its log |
 | Focus | 45 tab stops on a run page, skip link first, every stop with a visible focus outline |
 | Mobile (390 px) | 12 pages measured with no horizontal page overflow (one bug found by this check, screen-reader text escaping scroll areas, was fixed first) |
-| Themes | Graphite, paper and system render from the same tokens; screenshots in `docs/screenshots` |
+| Themes | Graphite, paper and system render from the same tokens |
 | Honesty fixes found during review | A TypeScript-location regex could span lines in build output (fixed, tested); the diagnosis panel could claim a screenshot on sample data (now requires a stored artifact); sample data snapshot step marked as not run |
 
-### Screenshots
-
-The version-two screenshots were replaced by the version-three set in `docs/screenshots/`.
-
----
-
-## First release — 8–9 October 2026
+### First release — 8–9 October 2026
 
 Recorded 8–9 October 2026 on the build machine (Linux, Node 22.22, Docker 29.8 with a locally assembled sandbox image). Everything below was executed; anything not executed is listed under **Not tested**.
 
-## Environment audit
+#### Environment audit
 
 | Item | Finding |
 |---|---|
@@ -342,7 +360,7 @@ Recorded 8–9 October 2026 on the build machine (Linux, Node 22.22, Docker 29.8
 | Anthropic API | Reachable. No API key available. |
 | Supabase | Unreachable (blocked). SQLite used instead; Postgres migration written but not run. |
 
-## Static checks
+#### Static checks
 
 | Check | Result |
 |---|---|
@@ -352,7 +370,7 @@ Recorded 8–9 October 2026 on the build machine (Linux, Node 22.22, Docker 29.8
 | `npm run build` (next build, production) | Pass |
 | Secret scan of source and `.next/static` | No credentials found. The client bundle contains the variable *name* `ANTHROPIC_API_KEY` in help text only. |
 
-## End-to-end runs (real execution)
+#### End-to-end runs (real execution)
 
 All runs below were executed by the worker against the Ledgerly fixture and are stored in the database.
 
@@ -365,7 +383,7 @@ All runs below were executed by the worker against the Ledgerly fixture and are 
 | run_TI2bNrQRsOgL | dab1526 | Incomplete | Sandbox image removed before the run; checks exited 125 and were classed as environment errors; verdict Incomplete, not Failed. Image restored afterwards. |
 | run_SB6sMEtliSxz | 74c8338 | Failed | Queued while the worker was stopped: UI showed "No worker is running" and the run stayed queued; picked up and completed after the worker started. Same result as run_pxUoh0r8maYn (reproducible). |
 
-## API and security probes
+#### API and security probes
 
 | Probe | Result |
 |---|---|
@@ -380,11 +398,11 @@ All runs below were executed by the worker against the Ledgerly fixture and are 
 | Another user's project/run (unit test) | Not returned; cancel returns not_found; createRun throws |
 | Security headers | X-Frame-Options DENY, nosniff, strict referrer policy, no X-Powered-By |
 
-## GitHub provider (public repository, no token)
+#### GitHub provider (public repository, no token)
 
 `octocat/Hello-World`: repository metadata, branches, commit list, short-SHA resolution and tarball export into a workspace all succeeded. A non-allowlisted repository was refused. A further call hit GitHub's unauthenticated rate limit and was reported as such.
 
-## Interface checks (headless Chromium via Playwright)
+#### Interface checks (headless Chromium via Playwright)
 
 | Check | Result |
 |---|---|
@@ -395,7 +413,7 @@ All runs below were executed by the worker against the Ledgerly fixture and are 
 | Keyboard | Skip link is the first tab stop; every interactive element on the overview is reachable in order with a visible focus outline; Enter on a step selects it and sets `aria-current` |
 | Reduced motion | Tested with `reduced_motion=reduce`; animations are disabled by CSS |
 
-## Not tested (both releases)
+#### Not tested at the first release and redesign (9 October 2026)
 
 - A successful AI explanation (no API key).
 - The redesign with real people; every layout decision is a hypothesis.

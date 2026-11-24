@@ -4,7 +4,17 @@
 
 **Live demo:** <https://prooflayer-steel.vercel.app/> · read-only replay of recorded runs
 
-ProofLayer takes a code change, as an AI coding agent would produce it, and runs it through checks the agent cannot influence: install, lint, types, tests and a production build in a network-less Docker sandbox, then customer journeys in headless Chromium. The verdict is decided from exit codes, with the evidence kept beside it. Its regression gate, **NeverBreak**, re-checks the journeys that passed before the change and, when one breaks, verifies a controlled repair the same way.
+**The problem.** An AI coding agent reports its own work as done. A change can compile, pass the tests the agent chose to run or rewrite, and still break something customers already rely on.
+
+**The approach.** ProofLayer treats the agent's report as a claim to verify. It takes the exact commit and runs checks executed independently of the coding agent:
+
+- **Dependencies** are installed by the verification worker on its host with `npm ci` under a restricted policy: registry-only lockfile with integrity hashes, no install scripts, no git, and the repository's `.npmrc` removed.
+- **Lint, type checking, tests and the production build** each run in an isolated Docker container with no network.
+- **Customer journeys** run in headless Chromium after a successful build.
+
+The verdict is decided from the recorded exit codes, with the evidence kept beside it.
+
+**NeverBreak** is the regression gate. It re-checks the tests and journeys that passed before the change and, when one breaks, verifies a controlled repair the same way.
 
 ```mermaid
 flowchart TB
@@ -32,7 +42,7 @@ flowchart TB
 
 The repair is controlled, not generated: it restores code known to have passed, or applies a fix written in advance. Nothing is merged or deployed automatically.
 
-This is an independent prototype, not a product. It is not affiliated with any company, verifies two fictional demo apps, and has no users.
+ProofLayer is an independent engineering prototype, not affiliated with any company. It verifies two fictional demo applications and demonstrates one controlled scenario end to end; see [Current Scope & Technical Boundaries](#current-scope--technical-boundaries).
 
 <table>
   <tr>
@@ -104,22 +114,23 @@ flowchart LR
   class I warn
 ```
 
-- **Verdicts come from recorded evidence.** One function (`lib/shared/verdict.ts`) decides from exit codes. Infrastructure errors, timeouts and skipped checks become *incomplete*, never *passed* or *failed*. Browser frames and AI text never feed into a verdict.
-- **Private live worker.** The pipeline above runs only on a private machine with the worker and Docker. The web app never executes checked code; it reads what the worker recorded.
-- **Public read-only demo.** The hosted demo runs none of this. It has no worker, Docker, git, secrets or sign-in, and replays an immutable snapshot of runs recorded on the private worker.
+- **Verdicts come from recorded evidence.** One function (`lib/shared/verdict.ts`) decides the run verdict from the exit codes of the five required checks. Infrastructure errors, timeouts and skipped checks become *incomplete*, never *passed* or *failed*. Screenshots and AI text are not inputs to it.
+- **Regression results add the browser.** NeverBreak marks a protected flow as broken when its test failed or its Chromium journey did not reach the expected screen.
+- **Private live worker.** The pipeline above runs only on a private machine with the worker and Docker. The web app does not execute checked code; it reads what the worker recorded.
+- **Public read-only demo.** The hosted demo runs none of this. It has no verification worker, Docker, git, operator credentials or sign-in, and replays an immutable snapshot of runs recorded on the private worker.
 
 Component view of both deployments, the sandbox and the request lifecycle: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Capabilities
 
-- **Sandboxed checks:** `npm ci` under a fixed policy, then lint, `tsc`, tests and `next build`, each in its own container.
+- **Independent checks:** `npm ci` on the worker host under a restricted policy, then lint, `tsc`, tests and `next build`, each in its own network-less container.
 - **Browser evidence:** scripted customer journeys in Chromium, a hashed PNG frame per step, expected versus actual.
 - **Structured proof** parsed from recorded output: test assertions, TypeScript and ESLint errors, and source excerpts from the commit.
 - **Regression gate and controlled repair** on isolated branches, as described above.
 - **Interactive preview** of the exact static build each run verified.
 - **Optional AI explanations** of failed checks (private mode only). Stored separately; they cannot change a verdict.
 
-Provenance of every feature, marked LIVE, LOCAL ONLY, EXAMPLE or PLANNED: [docs/FEATURES.md](docs/FEATURES.md).
+Status of every feature, from deployed demo to planned, with the evidence behind it: [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Security controls
 
@@ -167,17 +178,17 @@ npm run worker               # second terminal; sign in at /operator
 
 Every variable is server-only and documented in [.env.example](.env.example); the public demo needs none. Deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-## Limitations
+## Current Scope & Technical Boundaries
 
-- **Scope:** one controlled scenario. Requests are matched by rules; nothing is generated.
-- **What can be verified:** Node projects with an npm-registry `package-lock.json`; `node --test`, `vitest` or `jest`; `next build`. Install scripts are disabled.
-- **What "Passed" means:** the configured checks succeeded on that commit and the selected journeys reached their expected screens. It is not proof that the application has no bugs.
-- **Live verification:** one machine, one run at a time, one operator. No multi-tenant isolation, not hosted.
-- **Repair:** restores or rolls back code known to have passed, or applies the one prepared fix. It does not write fixes.
-- **AI explanations:** only their failure paths were tested; no real model response has been generated.
-- **No users:** there has been no usability testing.
+- **Scenario:** one controlled request on the DashDish fixture. Requests are matched by rules; the change and its repair were prepared in advance, not generated.
+- **Supported projects:** the two bundled fixtures, DashDish and Ledgerly. Node projects with an npm-registry `package-lock.json`; `node --test`, `vitest` or `jest`; `next build`. Install scripts are disabled.
+- **What "Passed" means:** the required checks exited 0 on that exact commit. A protected flow passes when its test passed and, where it has one, its journey reached the expected screen. Neither is proof that the application has no defects.
+- **Execution model:** live verification runs on one private machine, one run at a time, for a single operator. It is not hosted and has no multi-tenant isolation.
+- **Controlled repair:** restores or rolls back code known to have passed, or applies the one prepared fix. It does not write fixes.
+- **AI explanations:** implemented, with only their failure paths tested; a successful model response has not been validated.
+- **Evaluation:** no external user testing has been carried out.
 
-More: [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+Full detail: [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## How this was built
 
@@ -191,11 +202,11 @@ The public demo replays genuine Docker and Chromium execution evidence using a p
 
 | File | Contents |
 |---|---|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How NeverBreak learns, checks and repairs; the sandbox; the request lifecycle |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, execution pipeline, what each kind of evidence decides, request lifecycle |
 | [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) | Threat model, findings, fixes, tests, residual risks |
-| [docs/VALIDATION.md](docs/VALIDATION.md) | Exactly what was executed, with run IDs, and what was not |
-| [docs/FEATURES.md](docs/FEATURES.md) | Feature provenance with evidence |
-| [docs/LIMITATIONS.md](docs/LIMITATIONS.md) | What a verdict means, what isn't built |
+| [docs/VALIDATION.md](docs/VALIDATION.md) | Latest verification, then the October record with run IDs, and what was not tested |
+| [docs/FEATURES.md](docs/FEATURES.md) | Feature status with evidence |
+| [docs/LIMITATIONS.md](docs/LIMITATIONS.md) | Current scope and technical boundaries |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Vercel commands, public environment, private installation |
 
 ```

@@ -1,5 +1,11 @@
 # Security audit — 11 October 2026
 
+**Nature of this audit.** This is an AI-assisted internal audit. AI coding agents, working under the author's direction, reviewed the source, wrote and ran the proofs of concept and tests, and applied the fixes. A separate AI reviewer that had not seen that work then audited the fixes. No external human auditor was involved. This is not a penetration test or a certification, and it should not be read as one.
+
+**Two dates.** The audit, its findings and its tests are from October 2026. A smaller set of checks was repeated on 24 November 2026 before publication, including a smoke test of the hosted deployment run by the author; see [Current verification](#current-verification-24-november-2026).
+
+**Code references.** File and line references were checked against the published source on 25 November 2026 and matched. They describe the code at that point and will drift as it changes.
+
 Scope: the whole repository at the audited commit: the Next.js app (routes, API, server components), operator authentication, the verification worker, Docker execution, git operations, artifact and preview serving, persistence, the recorded demonstration, build and deployment configuration.
 
 **Method.**
@@ -8,17 +14,17 @@ Scope: the whole repository at the audited commit: the Next.js app (routes, API,
 - Automated tests: unit, route-handler and HTTP level.
 - `npm audit` and gitleaks for dependencies and secrets.
 - A browser QA pass.
-- A separate reviewer that had not seen the work audited the fixes; its findings are included below and were fixed.
+- A separate AI reviewer that had not seen the work audited the fixes; its findings are marked below and were fixed.
 
-This is a prototype prepared for a public, read-only demonstration. It is not a production service, and passing these checks does not make it one.
+ProofLayer is a prototype prepared for a public, read-only demonstration. Passing these checks does not make it a production service.
 
-## Decision
+## Conclusion (October 2026)
 
-**READY FOR PUBLIC READ-ONLY DEMO**
+**Assessed as ready for a public read-only demo.**
 
-No known critical or high-severity issue remains reachable in the public deployment. The two high findings were fixed and verified:
-- The public deployment is now read-only by construction.
-- The worker's host-side install can no longer be steered by the repository it checks.
+The audit found no remaining critical or high-severity issue reachable in the public deployment. The two high findings were fixed and the fixes tested:
+- The public deployment is read-only, enforced independently in the proxy, in each privileged route handler and by opening the data read-only.
+- The proof of concept against the worker's host-side install no longer works: the repository's npm configuration is discarded and a lockfile with non-registry sources is rejected.
 
 This holds only if the demo is deployed as described in [DEPLOYMENT.md](DEPLOYMENT.md):
 - Build with `npm run build:public`.
@@ -31,7 +37,7 @@ This holds only if the demo is deployed as described in [DEPLOYMENT.md](DEPLOYME
 |---|---|---|---|
 | 1 | Anonymous public reviewer | None | GET requests only (public demo) |
 | 2 | Authenticated operator | Full, single account | Sign-in, run requests, repairs, settings (private mode only) |
-| 3 | Next.js server | Trusted code | Reads the database; never executes checked code |
+| 3 | Next.js server | Trusted code | Reads the database; has no code path that executes checked code |
 | 4 | Verification worker | Trusted code, untrusted input | Exports a commit, installs, runs checks in Docker, drives Chromium |
 | 5 | Docker sandbox | Untrusted code | The checked repository's lint, types, tests, build |
 | 6 | Git repositories and repair branches | Fixture repos; repair branches written only by NeverBreak | `neverbreak/repair-*` refs only |
@@ -39,8 +45,7 @@ This holds only if the demo is deployed as described in [DEPLOYMENT.md](DEPLOYME
 | 8 | External APIs | Optional, private mode | Anthropic (explanations), GitHub (one allowlisted repo) |
 
 The public deployment contains boundaries 1, 3 and 7 only:
-- No worker, Docker, git, operator sign-in or external API exists there.
-- None of them is reachable from it.
+- It has no worker, Docker, git, operator sign-in or external API integration.
 
 ## Findings
 
@@ -53,15 +58,15 @@ Severity is for the deployment the finding affects:
 | F1 | **High** (public) | `lib/server/config.ts`, `lib/server/db.ts`, missing `.vercelignore` | The public deployment was not read-only by construction (details below). | **Fixed** |
 | F2 | **High** (private) | `worker/executor.ts` (install stage) | `npm ci` runs on the worker host. A commit could make it execute a program or fetch arbitrary URLs. **Proof of concept:** a repository `.npmrc` with `git=./evil.sh` plus a git dependency made `npm ci --ignore-scripts` run the script on the host. | **Fixed** |
 | F3 | Medium (private) | `worker/snapshot.ts` | Chromium on the worker host ran the untrusted app's JavaScript with unrestricted network access: loopback, the LAN, metadata services, the internet. | **Fixed** |
-| F4 | Medium (public) | `lib/server/run-detail.ts` `redactForPublic` (line 140) | Raw output could reach visitors in two ways. A fallback "last lines of output" proof carried raw log lines, and AI explanations could quote logs. *Found by the independent review.* | **Fixed** |
-| F5 | Medium (private) | `app/preview/[seg]/[[...path]]/route.ts` | Only HTML responses got the sandbox CSP. An SVG from an untrusted build, opened directly, would run with ProofLayer's origin and the operator's cookie. *Found by the independent review.* | **Fixed** |
+| F4 | Medium (public) | `lib/server/run-detail.ts` `redactForPublic` (line 140) | Raw output could reach visitors in two ways. A fallback "last lines of output" proof carried raw log lines, and AI explanations could quote logs. *Found by the separate AI review.* | **Fixed** |
+| F5 | Medium (private) | `app/preview/[seg]/[[...path]]/route.ts` | Only HTML responses got the sandbox CSP. An SVG from an untrusted build, opened directly, would run with ProofLayer's origin and the operator's cookie. *Found by the separate AI review.* | **Fixed** |
 | F6 | Medium | `lib/server/session.ts` `originAllowed` (line 72) | The CSRF check accepted any state-changing request without an `Origin` header. `SameSite=Lax` limited the impact. | **Fixed** |
 | F7 | Medium (private) | `app/api/auth/login/route.ts`, `lib/server/session.ts` `LoginLimiter` (line 92) | Sign-in limits were weak (details below). | **Fixed** |
 | F8 | Medium | preview route; `lib/server/preview.ts` | Three preview problems (details below). | **Fixed** |
 | F9 | Low (private) | `lib/server/auth.ts` | Signing out didn't revoke a copied session cookie; it stayed valid for 12 h. | **Fixed** |
 | F10 | Low | app pages, JSON routes | Missing hardening (details below). | **Fixed** |
 | F11 | Low (public) | `lib/server/viewer.ts` `isPublicProject` (line 23) | Visitors could browse the Ledgerly fixture; the demo's scope is DashDish only. | **Fixed** |
-| F12 | Low (public) | `scripts/build-snapshot.ts` | Three weaknesses in how the public snapshot was built (details below). *Found by the independent review.* | **Fixed** |
+| F12 | Low (public) | `scripts/build-snapshot.ts` | Three weaknesses in how the public snapshot was built (details below). *Found by the separate AI review.* | **Fixed** |
 | F13 | Low | `.gitignore` | `.env` and `.env.production` were not git-ignored; only `.env*.local` was. | **Fixed** |
 | F14 | Low (private) | `worker/executor.ts` | A kept static build could be any size, so an untrusted build could exhaust disk. | **Fixed** |
 | F15 | Info | repository | Dead code and unused dependencies, and an unused Supabase migration not marked as unused. | **Fixed** |
@@ -90,7 +95,7 @@ Severity is for the deployment the finding affects:
 2. npm configuration is pinned through environment variables, which take precedence over project files: registry, `git` disabled, `ignore-scripts`, empty user and global config.
 3. The lockfile must list only `https://registry.npmjs.org/` tarballs with integrity hashes, `node_modules/` install paths without traversal, or in-repo workspaces.
 
-A repository that also has `npm-shrinkwrap.json` is refused, because npm would read it instead. That bypass was found by the independent review.
+A repository that also has `npm-shrinkwrap.json` is refused, because npm would read it instead. That bypass was found by the separate AI review.
 
 **Verification:** the proof of concept no longer runs, and is rejected by each layer separately.
 
@@ -204,13 +209,13 @@ Fix: the sandbox CSP is sent on every preview response.
 - **Commands:**
   - Fixed argv for lint, typecheck and build.
   - The test command is accepted only if it matches `node --test`, `vitest run` or `jest --ci`.
-  - No user-supplied shell command exists anywhere.
-- **Prompt injection:** captured output is fenced and neutralised before it goes to the model (`neutralize`, explain.ts line 37). The model's answer is parsed as JSON, validated, stored separately and can never change a verdict.
-- **XSS:** no `dangerouslySetInnerHTML`, `eval` or `new Function` anywhere. React escapes all output.
+  - The review found no path by which a user-supplied shell command is executed.
+- **Prompt injection:** captured output is fenced and neutralised before it goes to the model (`neutralize`, explain.ts line 37). The model's answer is parsed as JSON, validated and stored separately; it is not an input to the verdict function.
+- **XSS:** no use of `dangerouslySetInnerHTML`, `eval` or `new Function` was found in the app, components, libraries or worker. Output is rendered through React's escaping.
 - **Repository and network allowlists:** local repositories are confined to `<data>/repos`. GitHub is limited to one allowlisted repository at `api.github.com` (SSRF-safe).
-- **Protection-off runs:** a run requested with NeverBreak off is never repaired (repair.ts line 117).
+- **Protection-off runs:** a repair is refused for a run requested with NeverBreak off (repair.ts line 117).
 - **Verdicts:**
-  - Decided from exit codes, never by AI.
+  - Decided from exit codes by one function; AI output is not an input.
   - Prepared fixes are labelled "written in advance, not generated".
   - Recorded playback is labelled "Recorded demonstration", and the public demo reports `workerOnline: false`.
 
@@ -244,7 +249,7 @@ Repeated before making the repository public, on the published history.
 | `tsc --noEmit`, `eslint .` | Clean |
 | `npm run build` and `npm run build:public` | Both succeed |
 | `scripts/security-smoke.mjs` against the local public build | **42 / 42** |
-| `scripts/security-smoke.mjs` against the production Vercel deployment, run by the author | **42 / 42** |
+| `scripts/security-smoke.mjs` against the production Vercel deployment, executed personally by the author | **42 / 42** |
 | gitleaks 8.21.2 on every commit of the published history | **No leaks.** The two synthetic values used by the redaction tests are allowed by exact value in `.gitleaks.toml`; the default rules stay on and nothing is allowed by path or by commit |
 
 Not repeated for this check: the Docker worker, the Chromium journeys, the operator authentication tests over HTTP and the simulated Vercel runtime.
@@ -260,17 +265,16 @@ Not repeated for this check: the Docker worker, the Chromium journeys, the opera
 7. **The origin check trusts `X-Forwarded-Host`.** Deploy behind a proxy that sets it (Vercel does), or with none.
 8. **Preview links are capabilities in the URL.** They carry an HMAC token and could leak through history or sharing. They expose only the public fixture's static builds.
 9. **The public build trusts the committed recorded package.** It is SHA-256 verified on import, but its authenticity rests on the git history.
-10. **Repository hygiene is only partly automated.** Dependabot is configured. Enable GitHub secret scanning and push protection when publishing.
+10. **Repository hygiene is only partly automated.** Dependabot is configured. GitHub secret scanning and push protection are repository settings and were not verified by this audit.
 
 ## Unverified assumptions
 
-- **No real Vercel deploy was done during the audit.** The audit had no Vercel access. A deployment was simulated as listed above. The demo has since been deployed to Vercel and the smoke test passes against the hosted URL (see the current verification); the individual assumptions below were not re-checked one by one. The simulation assumed:
+- **No real Vercel deploy was done during the October audit.** The audit had no Vercel access, so a deployment was simulated as listed above. **Since resolved in part:** the demo was deployed to Vercel and the hosted smoke test passed, 42 of 42, on 24 November 2026. The individual assumptions below were not re-checked one by one. The simulation assumed:
   - Vercel's build image provides `git` and `bash`, which `demo:init` uses to recreate the fixture repositories.
   - Vercel uses Node ≥ 22.18, which the `engines` field requires.
   - Vercel honours `outputFileTracingIncludes` for `.demo-snapshot/`.
   - `vercel deploy` honours `.vercelignore`.
 
-  `scripts/security-smoke.mjs` should be run against the real URL to confirm.
 - **Chromium's own sandbox was not tested,** because the audit environment runs as root.
 - **npm's handling of a traversing lockfile key was not tested.** Such keys are rejected before npm runs, so npm's behaviour is not relied on.
 - **No container-escape or kernel-level testing** was done on the Docker sandbox. The flags were verified in code and in real runs.
