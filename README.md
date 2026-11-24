@@ -143,7 +143,11 @@ More: [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ## How this was built
 
-I built ProofLayer with AI coding agents. I set the problem, the scope and the evidence-first rules, directed the work, and decided what shipped and how it is labelled. The agents wrote the code and ran the automated checks, including the security audit. I ran the hosted smoke test myself.
+I designed ProofLayer around a simple principle: AI-generated code changes should be independently verified, and verdicts should come from recorded execution evidence rather than an agent's claims.
+
+Built with AI coding agents under my direction, the prototype explores sandboxed verification, regression protection and controlled repair. The agents implemented the code and ran the automated tests and the security audit. I ran the final hosted security verification myself, passing all 42 checks.
+
+The public demo replays genuine Docker and Chromium execution evidence using a prepared change and repair.
 
 ## Documentation
 
